@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>备份与恢复</title>
+<style>
+:root{--ground:#EDF0F3;--surface:#FFFFFF;--ink:#17212B;--muted:#5C6B78;
+  --line:#CFD7DE;--done:#1F6F5C;--brass:#8A5A2B;--night:#2B3A4A;--soft:#E3E8EC;--bad:#A03A22}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:640px;margin:0 auto;padding:30px 16px 70px}
+a.back{font-size:14px;color:var(--muted);text-decoration:none}
+h1{font-size:25px;font-weight:700;letter-spacing:-.01em;margin:10px 0 6px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 22px}
+h2{font-size:18px;font-weight:700;margin:26px 0 10px}
+p{margin:0 0 12px}
+.note{font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--soft);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv b{font-weight:600}
+button{font-family:inherit;font-size:15px;cursor:pointer;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);border-radius:8px;padding:11px 16px}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.wide{width:100%}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+textarea{width:100%;min-height:150px;padding:11px;border:1px solid var(--line);border-radius:8px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;
+  background:var(--surface);color:var(--ink);resize:vertical}
+.msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:14px;line-height:1.55;
+  background:#DCEFE8;color:#17513F;border:1px solid #A9CFC1}
+.msg[hidden]{display:none}
+.msg.err{background:#F7E4DD;color:#7E2C17;border-color:#E0B7A8}
+.warn{border-left:3px solid var(--brass);padding-left:13px;margin:14px 0;font-size:14.5px}
+.stop{border-left:3px solid var(--bad);padding-left:13px;margin:14px 0;font-size:14.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">返回</a>
+  <h1>备份与恢复</h1>
+  <p class="sub">三个页面的数据存在同一个地方，一次备份全带走。</p>
+
+  <h2>现在存了什么</h2>
+  <div class="card" id="stat"></div>
+
+  <h2>导出</h2>
+  <div class="card">
+    <button class="primary wide" id="doExp">生成备份</button>
+    <div id="expMsg" class="msg" hidden></div>
+    <textarea id="expBox" readonly hidden placeholder="备份内容会出现在这里"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="expBtns" hidden>
+      <button id="doCopy">复制</button>
+      <button id="doFile">存成文件</button>
+    </div>
+  </div>
+  <p class="note">手机上最稳的做法是点「复制」，然后粘到备忘录里，标题写上日期。想要文件的话点「存成文件」，iOS 会让你选存到「文件」App。</p>
+
+  <h2>恢复</h2>
+  <div class="card">
+    <textarea id="impBox" placeholder="把之前备份的那段内容粘在这里"></textarea>
+    <button class="primary wide" id="doImp" style="margin-top:10px">从备份恢复</button>
+    <div id="impMsg" class="msg" hidden></div>
+  </div>
+  <div class="stop">恢复会<b>覆盖</b>这台设备上现有的记录。如果两边都有数据，先把现在这台的导出来存好，再恢复。</div>
+
+  <h2>什么时候该备份</h2>
+  <div class="card">
+    <div class="kv"><span>每周一次</span><b>固定习惯</b></div>
+    <div class="kv"><span>出远门或者要断更几天之前</span><b>一定要</b></div>
+    <div class="kv"><span>换手机、换浏览器之前</span><b>一定要</b></div>
+    <div class="kv"><span>清理手机存储之前</span><b>一定要</b></div>
+  </div>
+
+  <h2>为什么需要这个</h2>
+  <p>数据存在浏览器本地，有三个丢失的途径。</p>
+  <p><b>iOS Safari 的七天规则。</b>连续七天没打开这个网站的话，Safari 可能会把存储清掉，这是它反追踪机制的一部分。你天天填就碰不到，断更一周就有风险。</p>
+  <p><b>清理浏览器数据。</b>那种「清缓存释放空间」的操作会连数据一起抹掉。</p>
+  <p><b>换设备不通。</b>手机上填的，电脑上看不到，反过来也一样。这个页面也是在两台设备之间搬数据的唯一办法，导出一边，粘到另一边。</p>
+</div>
+
+<script>
+const KEYS=['sleep:diary','sleep:today','sleep:deal','gym:state','gym:log','gym:att','cut:log','cut:adj'];
+const LABEL={'sleep:diary':'睡眠日记','sleep:today':'今日睡眠打卡','sleep:deal':'奖惩约定',
+ 'gym:state':'训练状态','gym:log':'训练记录','gym:att':'出勤格子',
+ 'cut:log':'减脂填报','cut:adj':'热量调整'};
+
+function read(k){try{const s=localStorage.getItem(k);return s===null?null:JSON.parse(s);}catch(e){return null;}}
+function say(id,html,err){const e=document.getElementById(id);e.className='msg'+(err?' err':'');e.innerHTML=html;e.hidden=false;}
+function stamp(){const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function count(k,v){
+  if(v===null||v===undefined) return '空';
+  if(Array.isArray(v)){
+    if(k==='gym:att') return v.filter(x=>x>0).length+' 格';
+    return v.length+' 条';
+  }
+  if(typeof v==='object') return Object.keys(v).length?'有':'空';
+  return String(v);
+}
+
+function renderStat(){
+  const h=KEYS.map(k=>{
+    const v=read(k);
+    return '<div class="kv"><span>'+LABEL[k]+'</span><b>'+count(k,v)+'</b></div>';
+  }).join('');
+  const any=KEYS.some(k=>read(k)!==null);
+  document.getElementById('stat').innerHTML=any?h:
+    '<div style="text-align:center;color:#5C6B78;padding:18px 0;font-size:14px">'+
+    '这台设备上还没有任何记录。<br>如果你在别的设备上填过，用下面的恢复功能搬过来。</div>';
+}
+
+function build(){
+  const data={};
+  KEYS.forEach(k=>{const v=read(k); if(v!==null) data[k]=v;});
+  return JSON.stringify({v:1,at:stamp(),data},null,1);
+}
+
+document.getElementById('doExp').onclick=()=>{
+  const any=KEYS.some(k=>read(k)!==null);
+  if(!any){say('expMsg','这台设备上还没有任何记录，没东西可以导出。',true);return;}
+  const t=build();
+  const box=document.getElementById('expBox');
+  box.hidden=false; box.value=t;
+  document.getElementById('expBtns').hidden=false;
+  say('expMsg','<b>备份已生成。</b>点下面的「复制」，粘到备忘录里，标题写上今天的日期。');
+};
+
+document.getElementById('doCopy').onclick=()=>{
+  const box=document.getElementById('expBox');
+  box.focus(); box.select();
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(box.value).then(
+      ()=>say('expMsg','<b>已复制到剪贴板。</b>现在去备忘录新建一条粘上，标题写 '+stamp()+'。'),
+      ()=>say('expMsg','自动复制没成功，上面的内容已经全选了，手动复制一下。',true));
+  }else{
+    say('expMsg','上面的内容已经全选了，手动复制一下。');
+  }
+};
+
+document.getElementById('doFile').onclick=()=>{
+ try{
+  const blob=new Blob([document.getElementById('expBox').value],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='plans-backup-'+stamp()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  say('expMsg','文件已生成。手机上如果没弹出保存窗口，用「复制」那个办法更稳。');
+ }catch(e){ say('expMsg','这个浏览器不支持存文件，请用「复制」。',true); }
+};
+
+document.getElementById('doImp').onclick=()=>{
+  const raw=document.getElementById('impBox').value.trim();
+  if(!raw){say('impMsg','先把备份内容粘进上面的框里。',true);return;}
+  let o;
+  try{o=JSON.parse(raw);}catch(e){say('impMsg','这段内容不是有效的备份，解析失败。检查一下是不是复制完整了，开头应该是一个大括号。',true);return;}
+  const d=(o&&o.data)?o.data:o;
+  if(!d||typeof d!=='object'){say('impMsg','备份格式不对，找不到数据部分。',true);return;}
+  const hit=Object.keys(d).filter(k=>KEYS.includes(k));
+  if(!hit.length){say('impMsg','这段备份里没有能识别的记录。',true);return;}
+  let n=0;
+  hit.forEach(k=>{try{localStorage.setItem(k,JSON.stringify(d[k]));n++;}catch(e){}});
+  renderStat();
+  say('impMsg','<b>恢复完成，写入了 '+n+' 项。</b>'+(o.at?'这份备份来自 '+o.at+'。':'')+
+      '<br>现在回到各个页面刷新一下，记录就出来了。');
+};
+
+renderStat();
+</script>
+</body>
+</html>

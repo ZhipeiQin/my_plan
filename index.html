@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>我的计划</title>
+<style>
+:root{--ground:#EDF0F3;--surface:#FFFFFF;--ink:#17212B;--muted:#5C6B78;
+  --line:#CFD7DE;--done:#1F6F5C;--brass:#8A5A2B;--night:#2B3A4A;--soft:#E3E8EC}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:34px 16px 60px}
+h1{font-size:27px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 26px}
+a.tile{display:block;text-decoration:none;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-radius:11px;padding:18px;margin-bottom:12px}
+a.tile:active{background:#F6F8F9}
+.tname{font-size:18px;font-weight:700;margin-bottom:3px}
+.tdesc{font-size:14px;color:var(--muted);line-height:1.55}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;
+  margin-bottom:8px;background:#DCEFE8;color:#17513F}
+.tag.b{background:#EAE2D4;color:#6B4A18}
+.tag.c{background:#E0E9F1;color:#2C4F6E}
+.tag.d{background:#E5E2EC;color:#443A5C}
+.foot{background:var(--night);color:#C5D0DA;border-radius:11px;padding:17px;margin-top:22px;font-size:14px;line-height:1.6}
+.foot b{color:#fff}
+.foot p{margin:0 0 10px}
+.foot p:last-child{margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>我的计划</h1>
+  <p class="sub">三件事，优先级从上到下。</p>
+
+  <a class="tile" href="sleep-plan.html">
+    <span class="tag">优先级最高</span>
+    <div class="tname">睡眠重建</div>
+    <div class="tdesc">每天早上填一次。锚点是 8:30 起床，上床时间由数据决定。这个页面每天都要开。</div>
+  </a>
+
+  <a class="tile" href="gym-plan.html">
+    <span class="tag b">每周两到三次</span>
+    <div class="tname">十二周健身房起步</div>
+    <div class="tdesc">训练日打开。动作、组数、关节红线、器械阶梯都在里面。</div>
+  </a>
+
+  <a class="tile" href="cut-plan.html">
+    <span class="tag c">每天称重</span>
+    <div class="tname">十二周减脂填报</div>
+    <div class="tdesc">早上称完体重填进去。份量清单能一键估算热量和蛋白。</div>
+  </a>
+
+  <a class="tile" href="backup.html">
+    <span class="tag d">每周一次</span>
+    <div class="tname">备份与恢复</div>
+    <div class="tdesc">把三个页面的记录导出成一段文字，存到备忘录。也是在两台设备之间搬数据的唯一办法。</div>
+  </a>
+
+  <div class="foot">
+    <p><b>数据存在这台设备的浏览器里。</b>换设备、换浏览器、清理浏览数据，记录都会丢。所以每周去备份页导出一次，粘到备忘录。</p>
+    <p><b>今天只有一件事是硬的。</b>明早 8:30 那个闹钟。昨晚睡了多久都不影响它。</p>
+  </div>
+</div>
+</body>
+</html>
