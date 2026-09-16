@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>十二周减脂填报</title>
+<style>
+:root{
+  --ground:#EDF0F3;--surface:#FFFFFF;--ink:#17212B;--muted:#5C6B78;
+  --line:#CFD7DE;--done:#1F6F5C;--brass:#8A5A2B;--soft:#E3E8EC;
+  --bad:#A03A22;--night:#2B3A4A;--pro:#3E6F9E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 80px}
+header{padding:26px 0 0}
+h1{font-size:26px;line-height:1.25;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+
+.rx{background:var(--night);color:#fff;border-radius:10px;padding:18px;margin-top:16px}
+.rxtop{font-size:13px;color:#A8B6C4;margin-bottom:10px}
+.rxrow{display:flex;gap:22px;align-items:baseline;flex-wrap:wrap}
+.rxbig{font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.1;display:block}
+.rxlab{font-size:12.5px;color:#A8B6C4;display:block;font-weight:400}
+.track{height:8px;border-radius:4px;background:#3D4F60;margin-top:16px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--done);width:0}
+.rxfoot{margin-top:14px;padding-top:12px;border-top:1px solid #3D4F60;font-size:13.5px;color:#C5D0DA}
+
+button{font-family:inherit;font-size:14px;cursor:pointer;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 14px}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.small{padding:5px 10px;font-size:13px}
+
+nav.tabs{position:sticky;top:0;z-index:20;background:var(--ground);padding:12px 0 10px;margin-top:16px;
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{white-space:nowrap;border-radius:999px;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+section[hidden]{display:none}
+h2{font-size:19px;font-weight:700;margin:26px 0 10px}
+h2:first-child{margin-top:4px}
+h3{font-size:16px;font-weight:600;margin:20px 0 8px}
+p{margin:0 0 12px}
+.note{font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.warn{border-left:3px solid var(--brass);padding-left:13px;margin:14px 0;font-size:14.5px}
+.stop{border-left:3px solid var(--bad);padding-left:13px;margin:14px 0;font-size:14.5px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--soft);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv b{font-weight:600;white-space:nowrap}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:5px}
+.field .hint{font-size:12.5px;color:var(--muted);font-weight:400;margin-top:3px}
+input[type=number],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);
+  border-radius:8px;font-family:inherit;font-size:16px;background:var(--surface);color:var(--ink)}
+.two{display:flex;gap:10px}
+.two>.field{flex:1}
+
+.bars{margin-top:4px}
+.bar{margin-bottom:13px}
+.bhead{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px}
+.btrack{height:9px;border-radius:5px;background:var(--soft);overflow:hidden}
+.btrack i{display:block;height:100%;width:0;background:var(--pro)}
+.btrack i.ok{background:var(--done)}
+.btrack i.over{background:var(--brass)}
+
+.msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:14px;line-height:1.55;
+  background:#DCEFE8;color:#17513F;border:1px solid #A9CFC1}
+.msg[hidden]{display:none}
+.msg.err{background:#F7E4DD;color:#7E2C17;border-color:#E0B7A8}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.fast{background:#F4E0D9;color:#7E2C17}
+.pill.ok{background:#DCEFE8;color:#17513F}
+.pill.slow{background:#EAE2D4;color:#6B4A18}
+.port{display:flex;align-items:flex-start;gap:11px;padding:11px;border:1px solid var(--line);
+  border-radius:9px;margin-bottom:7px;background:var(--surface);cursor:pointer}
+.port[data-on="1"]{border-color:var(--done);background:#F4FAF8}
+.pbox{width:22px;height:22px;flex:none;border:1.5px solid var(--line);border-radius:6px;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:var(--surface)}
+.port[data-on="1"] .pbox{background:var(--done);border-color:var(--done)}
+.pt{font-size:14.5px;line-height:1.45}
+.pd{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:8px 5px;border-bottom:1px solid var(--soft)}
+th{font-weight:600;color:var(--muted);font-size:12.5px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px}
+svg.spark{width:100%;height:120px;display:block}
+#expBox{width:100%;margin-top:10px;font-size:13px;min-height:130px;padding:10px;
+  border:1px solid var(--line);border-radius:8px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>十二周减脂填报</h1>
+  <p class="sub">73 到 68 公斤。速度由七日均线决定，不由单日体重决定。</p>
+
+  <div class="rx">
+    <div class="rxtop" id="rxTop">还没有体重记录</div>
+    <div class="rxrow">
+      <div><span class="rxbig" id="rxAvg">—</span><span class="rxlab">七日均重</span></div>
+      <div><span class="rxbig" id="rxLeft">5.0</span><span class="rxlab">还差几公斤</span></div>
+      <div><span class="rxbig" id="rxKcal">1950</span><span class="rxlab">今日热量目标</span></div>
+    </div>
+    <div class="track"><i id="rxBar"></i></div>
+    <div class="rxfoot" id="rxFoot">先连续称七天，系统才能给出有意义的判断。这七天照常吃，不用先减。</div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="today" aria-selected="true">今天填报</button>
+  <button role="tab" data-tab="trend" aria-selected="false">趋势</button>
+  <button role="tab" data-tab="how" aria-selected="false">怎么吃</button>
+  <button role="tab" data-tab="rule" aria-selected="false">规则</button>
+</nav>
+
+<!-- ======== 今天 ======== -->
+<section id="tab-today">
+  <h2>早上称的体重</h2>
+  <div class="card">
+    <div class="field"><label>体重</label>
+      <input type="number" id="fW" step="0.1" min="40" max="140" placeholder="73.0">
+      <div class="hint">起床上完厕所、空腹、不穿衣服。每天同一个条件，条件比数字准不准更重要</div></div>
+  </div>
+
+  <h2>今天吃了什么量</h2>
+  <div class="card">
+    <p class="note" style="margin:0 0 12px">懒得数热量就用这个。勾上吃到的份量，按下面的按钮自动填进下方的四个框。</p>
+    <div id="portions"></div>
+    <div class="kv" style="margin-top:6px"><span>按份量估算</span><b id="pSum">0 千卡 · 0 克蛋白</b></div>
+    <button class="small" id="fillFromP" style="margin-top:10px">用这个估算填进下面</button>
+  </div>
+
+  <div class="card">
+    <div class="two">
+      <div class="field"><label>热量（千卡）</label>
+        <input type="number" id="fK" step="10" min="0" max="6000" placeholder="1950"></div>
+      <div class="field"><label>蛋白质（克）</label>
+        <input type="number" id="fP" step="1" min="0" max="400" placeholder="145"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>脂肪（克）</label>
+        <input type="number" id="fF" step="1" min="0" max="300" placeholder="60"></div>
+      <div class="field"><label>碳水（克）</label>
+        <input type="number" id="fC" step="1" min="0" max="800" placeholder="200"></div>
+    </div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="card">
+    <button class="primary" id="save" style="width:100%;padding:13px">保存今天</button>
+    <div id="msg" class="msg" hidden></div>
+    <p class="note" style="margin:12px 0 0">一天只存一条，重复保存会覆盖。体重和饮食可以分开填，先填哪个都行。</p>
+  </div>
+</section>
+
+<!-- ======== 趋势 ======== -->
+<section id="tab-trend" hidden>
+  <h2>体重走势</h2>
+  <div class="card">
+    <svg class="spark" id="spark" viewBox="0 0 320 120" preserveAspectRatio="none"></svg>
+    <p class="note" style="margin:10px 0 0">细线是每天称的数，粗线是七日均线。<b>只看粗线。</b>细线的上下跳动主要来自水分和食物残留，一顿重口味能让第二天虚高一公斤。</p>
+  </div>
+
+  <h2>近况</h2>
+  <div class="card" id="statCard"><div class="empty">还没有足够的数据。</div></div>
+
+  <h2>记录</h2>
+  <div class="card" id="logCard"><div class="empty">还没有记录。</div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="exp">复制成文字</button>
+    <button id="wipe">清除全部记录</button>
+  </div>
+  <div id="dataMsg" class="msg" hidden></div>
+  <textarea id="expBox" hidden readonly></textarea>
+</section>
+
+<!-- ======== 怎么吃 ======== -->
+<section id="tab-how" hidden>
+  <h2>四个数字的优先级</h2>
+  <p>按重要性排，<b>蛋白质 &gt; 热量 &gt; 脂肪 &gt; 碳水</b>。如果某天只能顾一个，顾蛋白质。</p>
+  <div class="card">
+    <div class="kv"><span>蛋白质</span><b>145 到 160 克</b></div>
+    <div class="kv"><span>热量</span><b>1950 千卡</b></div>
+    <div class="kv"><span>脂肪</span><b>不低于 55 克</b></div>
+    <div class="kv"><span>碳水</span><b>剩下的都给它</b></div>
+  </div>
+  <p class="note">减脂期的蛋白质要求比增肌期还高，每公斤体重 2 到 2.2 克。热量不足时身体更倾向于分解肌肉，蛋白质是唯一能有效对抗这件事的饮食手段。</p>
+
+  <h2>145 克蛋白长什么样</h2>
+  <div class="card">
+    <div class="kv"><span>鸡胸肉 100 克</span><b>约 31 克</b></div>
+    <div class="kv"><span>鸡腿肉去皮 100 克</span><b>约 24 克</b></div>
+    <div class="kv"><span>瘦牛肉 100 克</span><b>约 26 克</b></div>
+    <div class="kv"><span>三文鱼 100 克</span><b>约 22 克</b></div>
+    <div class="kv"><span>鸡蛋 1 个</span><b>约 6 克</b></div>
+    <div class="kv"><span>牛奶 250 毫升</span><b>约 8 克</b></div>
+    <div class="kv"><span>北豆腐 100 克</span><b>约 12 克</b></div>
+    <div class="kv"><span>蛋白粉 1 勺</span><b>约 22 克</b></div>
+  </div>
+  <p class="note">上面都是生重或包装标注量，数值是常见范围的中间值，不同部位和品牌会有出入。</p>
+
+  <h3>一天凑够的一个样子</h3>
+  <p>早餐两个鸡蛋加一杯牛奶，约 20 克。午餐一份手掌大的肉，约 35 克。下午一勺蛋白粉，约 22 克。晚餐一份肉加一块豆腐，约 45 克。睡前一杯牛奶，约 8 克。加上主食蔬菜里的零散蛋白，总数大概到 140 到 150。</p>
+
+  <h2>不想数热量的版本</h2>
+  <p>按食物克数吃，比数热量容易坚持得多，误差也比凭感觉估要小。下面这套的合计大约 1940 千卡、158 克蛋白、57 克脂肪、195 克碳水。</p>
+  <div class="card">
+    <div class="kv"><span>肉鱼虾，生重</span><b>450 克</b></div>
+    <div class="kv"><span>鸡蛋</span><b>2 个</b></div>
+    <div class="kv"><span>牛奶</span><b>250 毫升</b></div>
+    <div class="kv"><span>蛋白粉</span><b>1 勺</b></div>
+    <div class="kv"><span>主食，熟重</span><b>550 克</b></div>
+    <div class="kv"><span>蔬菜</span><b>500 克</b></div>
+    <div class="kv"><span>油</span><b>25 克</b></div>
+    <div class="kv"><span>水果</span><b>1 个</b></div>
+  </div>
+  <p class="note">分到三餐，大约每餐 150 克肉、180 克主食、170 克菜。蛋白粉和牛奶放在训练后或者睡前。</p>
+
+  <h2>网上流传的那套份量公式，别直接用</h2>
+  <p>有一套按体重（斤）乘系数算份量的方法，主食乘 4、肉蛋乘 3、蔬菜乘 5、油乘 0.3。按你的体重算出来热量勉强能用，但有两个问题。</p>
+  <p><b>蛋白质给少了。</b>它算出来的 438 克生重肉蛋只有 95 到 100 克蛋白质，而你减脂期需要 145 到 160 克。这个缺口直接决定你掉的体重里有多少是肌肉。</p>
+  <p><b>油给多了。</b>44 克油接近 400 千卡，占全天热量的 22%，而且全部来自饱腹感最低的来源。上面的版本把它砍到 25 克，省下的额度全部换成了肉。</p>
+  <div class="stop">
+    那套材料里还有一条「某顿吃多了下顿少吃，保证 10 天总量不超」。<b>这条请直接忽略。</b>这种补偿逻辑会把每一次多吃变成需要偿还的债，是限制与暴食循环的典型入口。多吃了就是多吃了，第二天照常吃，七日均线会处理掉它。
+  </div>
+
+  <h2>几条常见说法的澄清</h2>
+  <div class="card">
+    <div class="kv"><span>练后 10 分钟窗口期</span><b>不成立</b></div>
+    <div class="kv"><span>少食多餐能提高代谢</span><b>不成立</b></div>
+    <div class="kv"><span>先吃菜肉再吃主食</span><b>能降血糖峰值，对减脂影响很小</b></div>
+    <div class="kv"><span>练前慢碳、练后快碳</span><b>对每周练两三次的人意义很小</b></div>
+  </div>
+  <p class="note">所谓合成窗口，现在的共识是至少有几个小时，练前吃过东西的话还要更宽。你练完慢慢走回家再吃饭没有任何损失。餐次频率在总量相同时对结果没有实质影响，三餐加一次加餐完全够。</p>
+
+  <h2>怎么填报，别把自己累死</h2>
+  <p>逐克称重记录能坚持下来的人很少，而且你已经明确说过自己在没有外力时执行力不行。所以用<b>简化版</b>。</p>
+  <p>外食或者不好估的那餐，按经验值填个整数就行，误差二三百千卡不影响十二周的结果。真正需要认真数的只有蛋白质，因为它有下限。</p>
+  <div class="warn">如果记录这件事本身开始让你焦虑、或者你发现自己在为了数字而少吃，<b>立刻停掉逐日记录</b>，只留每天称重那一项。工具是为了服务目标，不是反过来。</div>
+
+  <h2>钠和水</h2>
+  <p>你之前那顿卤味加照烧的饭，钠很高，第二天早上体重一定偏重，脸也会更肿。这跟脂肪没有关系。重口味的第二天称出来的数照常记，七日均线会把它吸收掉，不要因为那一天的数字改变计划。</p>
+</section>
+
+<!-- ======== 规则 ======== -->
+<section id="tab-rule" hidden>
+  <h2>三条硬条件</h2>
+  <div class="card">
+    <div class="kv"><span>力量训练一次都不能少</span><b>每周至少两次</b></div>
+    <div class="kv"><span>蛋白质下限</span><b>每天 140 克</b></div>
+    <div class="kv"><span>体重只看七日均线</span><b>不看单日</b></div>
+  </div>
+  <p>减脂期不训练，掉的体重里肌肉的占比会明显变高。你的肌肉量本来就低，没有可以牺牲的余地。宁可某天热量超一点，也不要蛋白质不够。</p>
+
+  <h2>自动调整逻辑</h2>
+  <p>每满七天，系统拿这周的七日均重和上周比，算出实际的每周变化，然后跟目标的 0.42 公斤对照。</p>
+  <div class="card">
+    <div class="kv"><span>每周掉 0.3 到 0.6 公斤</span><b>热量不动</b></div>
+    <div class="kv"><span>掉得比 0.3 少</span><b>热量减 150</b></div>
+    <div class="kv"><span>掉得比 0.7 多</span><b>热量加 150</b></div>
+  </div>
+  <p class="note">掉太快也要调整，这不是保守。超过每周体重的 1%，瘦体重流失的比例会明显上升，你会更快地变成一个更轻但更没形的版本。</p>
+  <p>热量有下限，<b>不低于 1600 千卡</b>。如果调到 1600 还是掉不动，问题不在热量，多半在记录不准或者日常活动量降了，那时候该查的是这两样，不是继续往下压。</p>
+
+  <h2>停下来的信号</h2>
+  <div class="stop">
+    出现下面任何一条，暂停减脂、回到维持热量：<br>
+    训练重量连续两周明显下滑。<br>
+    持续疲劳、怕冷、情绪低落。<br>
+    睡眠比开始前更差。<br>
+    开始对吃东西这件事产生焦虑，或者出现不吃就安心、吃了就后悔的念头。
+  </div>
+  <p>最后那一条特别值得留意。减脂本身没问题，但它和饮食焦虑之间的界线有时候不明显。如果你注意到自己越过了那条线，这件事的优先级应该立刻让位，找人聊聊比坚持计划重要。</p>
+
+  <h2>关于时间点</h2>
+  <p>我仍然认为更好的顺序是先修睡眠、先练两个月，再开始减。睡眠严重不足时减脂，掉的东西里瘦体重的比例会更高，等于用更差的汇率换体重。</p>
+  <p>但这是你的决定。如果现在就要开始，那就把上面三条硬条件守住，尤其是蛋白质和训练。这两条能把损失压到最小。</p>
+
+  <h2>十二周之后</h2>
+  <p>到了 68 公斤不要继续往下。你 178 公分，68 公斤已经是 BMI 21.5，再往下就要开始动你本来就不多的肌肉了。</p>
+  <p>接下来该做的是<b>回到维持热量，把重心全部转到训练上</b>。你真正想要的那个样子，最后一段路是靠增肌走完的，不是靠继续减。</p>
+</section>
+
+</div>
+
+<script>
+const GOAL={start:73,target:68,weeks:12,kcal:1950,pro:150,fat:60,carb:200,floor:1600};
+const mem={};
+const store={
+  async get(k){
+    try{const r=await window.storage.get(k); if(r) return JSON.parse(r.value);}catch(e){}
+    try{const s=localStorage.getItem(k); if(s!==null) return JSON.parse(s);}catch(e){}
+    return mem[k]??null;
+  },
+  async set(k,v){
+    mem[k]=v;
+    try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+    try{await window.storage.set(k,JSON.stringify(v));}catch(e){}
+  }
+};
+let LOG=[], ADJ=0;
+
+function key(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function say(id,html,err){const e=document.getElementById(id);e.className='msg'+(err?' err':'');e.innerHTML=html;e.hidden=false;}
+function target(){return Math.max(GOAL.floor, GOAL.kcal+ADJ);}
+
+/* 按时间正序的体重序列 */
+function weights(){return LOG.filter(r=>r.w).slice().sort((a,b)=>a.key<b.key?-1:1);}
+function avgLast(arr,n){const a=arr.slice(-n);if(!a.length)return null;return a.reduce((s,r)=>s+r.w,0)/a.length;}
+
+const PORT=[
+ {id:'meat',n:'肉鱼虾 生重 450 克',d:'鸡胸、鱼、虾、瘦牛肉为主，手掌大小一份约 120 克',k:470,p:95,f:9,c:0},
+ {id:'egg', n:'鸡蛋 2 个',d:'',k:145,p:12,f:10,c:1},
+ {id:'milk',n:'牛奶 250 毫升',d:'',k:160,p:8,f:8,c:12},
+ {id:'whey',n:'蛋白粉 1 勺',d:'纯分离乳清，不要碳水蛋白各半的增肌粉',k:115,p:24,f:2,c:3},
+ {id:'carb',n:'主食 熟重 550 克',d:'米饭、面、土豆都行，分到三餐大约每餐 180 克',k:640,p:11,f:2,c:140},
+ {id:'veg', n:'蔬菜 500 克',d:'叶菜为主',k:110,p:8,f:1,c:20},
+ {id:'oil', n:'油 25 克',d:'橄榄油或菜籽油',k:225,p:0,f:25,c:0},
+ {id:'fruit',n:'水果 1 个',d:'',k:75,p:1,f:0,c:18}
+];
+let PSEL={};
+
+function renderPort(){
+  const h=document.getElementById('portions');
+  h.innerHTML=PORT.map(x=>
+    '<div class="port" data-id="'+x.id+'" data-on="'+(PSEL[x.id]?'1':'0')+'">'+
+    '<div class="pbox">✓</div><div class="pt">'+x.n+
+    (x.d?'<span class="pd">'+x.d+'</span>':'')+'</div></div>').join('');
+  h.querySelectorAll('.port').forEach(el=>{
+    el.onclick=()=>{PSEL[el.dataset.id]=!PSEL[el.dataset.id];renderPort();};
+  });
+  const s=PORT.filter(x=>PSEL[x.id]).reduce((a,x)=>({k:a.k+x.k,p:a.p+x.p,f:a.f+x.f,c:a.c+x.c}),{k:0,p:0,f:0,c:0});
+  document.getElementById('pSum').textContent=s.k+' 千卡 · '+s.p+' 克蛋白';
+  return s;
+}
+document.getElementById('fillFromP').onclick=()=>{
+  const s=PORT.filter(x=>PSEL[x.id]).reduce((a,x)=>({k:a.k+x.k,p:a.p+x.p,f:a.f+x.f,c:a.c+x.c}),{k:0,p:0,f:0,c:0});
+  document.getElementById('fK').value=s.k;
+  document.getElementById('fP').value=s.p;
+  document.getElementById('fF').value=s.f;
+  document.getElementById('fC').value=s.c;
+  renderBars();
+};
+
+async function boot(){
+  const l=await store.get('cut:log'); if(Array.isArray(l)) LOG=l;
+  const a=await store.get('cut:adj'); if(typeof a==='number') ADJ=a;
+  const t=LOG.find(r=>r.key===key());
+  if(t){
+    if(t.w)document.getElementById('fW').value=t.w;
+    if(t.k)document.getElementById('fK').value=t.k;
+    if(t.p)document.getElementById('fP').value=t.p;
+    if(t.f)document.getElementById('fF').value=t.f;
+    if(t.c)document.getElementById('fC').value=t.c;
+  }
+  renderPort(); renderBars(); renderRx(); renderSpark(); renderStat(); renderLog();
+}
+
+/* 进度条 */
+function renderBars(){
+  const v={k:+document.getElementById('fK').value||0,p:+document.getElementById('fP').value||0,
+           f:+document.getElementById('fF').value||0,c:+document.getElementById('fC').value||0};
+  const rows=[
+   {n:'蛋白质',cur:v.p,goal:GOAL.pro,u:'克',lo:140},
+   {n:'热量',cur:v.k,goal:target(),u:'千卡',lo:null},
+   {n:'脂肪',cur:v.f,goal:GOAL.fat,u:'克',lo:55},
+   {n:'碳水',cur:v.c,goal:GOAL.carb,u:'克',lo:null}
+  ];
+  document.getElementById('bars').innerHTML=rows.map(r=>{
+    const pct=Math.min(100,r.goal?r.cur/r.goal*100:0);
+    let cls='';
+    if(r.n==='热量'){ cls = r.cur>r.goal*1.1?'over':(r.cur>=r.goal*0.85?'ok':''); }
+    else { cls = (r.lo&&r.cur>=r.lo)||(!r.lo&&r.cur>=r.goal*0.9)?'ok':''; }
+    return '<div class="bar"><div class="bhead"><span>'+r.n+'</span><span>'+
+      (r.cur||0)+' / '+r.goal+' '+r.u+'</span></div>'+
+      '<div class="btrack"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';
+  }).join('');
+}
+['fK','fP','fF','fC'].forEach(id=>document.getElementById(id).addEventListener('input',renderBars));
+
+/* 顶部 */
+function renderRx(){
+  const w=weights();
+  document.getElementById('rxKcal').textContent=target();
+  if(w.length<7){
+    document.getElementById('rxTop').textContent='还差 '+(7-w.length)+' 天才能算出七日均线';
+    document.getElementById('rxAvg').textContent=w.length?avgLast(w,w.length).toFixed(1):'—';
+    document.getElementById('rxFoot').textContent='先连续称七天，系统才能给出有意义的判断。这七天照常吃，不用先减。';
+    return;
+  }
+  const cur=avgLast(w,7);
+  document.getElementById('rxAvg').textContent=cur.toFixed(1);
+  const left=Math.max(0,cur-GOAL.target);
+  document.getElementById('rxLeft').textContent=left.toFixed(1);
+  const pct=Math.min(100,Math.max(0,(GOAL.start-cur)/(GOAL.start-GOAL.target)*100));
+  document.getElementById('rxBar').style.width=pct+'%';
+  document.getElementById('rxTop').textContent='已记录 '+w.length+' 天 · 完成 '+Math.round(pct)+'%';
+
+  if(w.length<14){
+    document.getElementById('rxFoot').innerHTML='再记满 '+(14-w.length)+' 天，系统就能算出你的实际每周变化并给出热量调整建议。';
+    return;
+  }
+  const prev=avgLast(w.slice(0,-7),7);
+  const rate=prev-cur;
+  let pill,txt,adj=0;
+  if(rate>=0.3&&rate<=0.6){pill='<span class="pill ok">速度合适</span>';txt='热量保持不动。';}
+  else if(rate<0.3){pill='<span class="pill slow">偏慢</span>';txt='热量下调 150。也先检查记录是不是漏了什么。';adj=-150;}
+  else{pill='<span class="pill fast">偏快</span>';txt='热量上调 150。掉太快会多掉肌肉，这不是好事。';adj=150;}
+  document.getElementById('rxFoot').innerHTML=pill+' 近一周实际变化 '+(rate>=0?'-':'+')+Math.abs(rate).toFixed(2)+
+    ' 公斤，目标 -0.42。'+txt+
+    (adj?'<div style="margin-top:10px"><button class="small" id="applyAdj">应用调整</button></div>':'');
+  const b=document.getElementById('applyAdj');
+  if(b) b.onclick=async()=>{ADJ+=adj;await store.set('cut:adj',ADJ);renderRx();renderBars();};
+}
+
+/* 折线 */
+function renderSpark(){
+  const w=weights(), svg=document.getElementById('spark');
+  if(w.length<2){svg.innerHTML='<text x="160" y="62" text-anchor="middle" font-size="11" fill="#5C6B78">数据还不够画图</text>';return;}
+  const vals=w.map(r=>r.w);
+  const ma=w.map((_,i)=>{const s=w.slice(Math.max(0,i-6),i+1);return s.reduce((a,b)=>a+b.w,0)/s.length;});
+  const lo=Math.min(...vals,GOAL.target)-0.4, hi=Math.max(...vals,GOAL.start)+0.4;
+  const X=i=>w.length>1?i/(w.length-1)*312+4:160;
+  const Y=v=>110-(v-lo)/(hi-lo)*100;
+  const p=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  svg.innerHTML=
+   '<line x1="0" y1="'+Y(GOAL.target).toFixed(1)+'" x2="320" y2="'+Y(GOAL.target).toFixed(1)+
+     '" stroke="#8A5A2B" stroke-width="1" stroke-dasharray="3 3"/>'+
+   '<text x="4" y="'+(Y(GOAL.target)-4).toFixed(1)+'" font-size="9" fill="#8A5A2B">目标 68</text>'+
+   '<path d="'+p(vals)+'" fill="none" stroke="#B4C0CB" stroke-width="1"/>'+
+   '<path d="'+p(ma)+'" fill="none" stroke="#1F6F5C" stroke-width="2.5" stroke-linejoin="round"/>';
+}
+
+function renderStat(){
+  const w=weights(), c=document.getElementById('statCard');
+  if(w.length<7){c.innerHTML='<div class="empty">连续称满七天后这里会有内容。</div>';return;}
+  const cur=avgLast(w,7);
+  const done=GOAL.start-cur, left=cur-GOAL.target;
+  let rate=null;
+  if(w.length>=14) rate=avgLast(w.slice(0,-7),7)-cur;
+  let eta='—';
+  if(rate&&rate>0.05) eta=Math.ceil(left/rate)+' 周';
+  const days=LOG.filter(r=>r.p).length;
+  const avgP=days?Math.round(LOG.filter(r=>r.p).reduce((s,r)=>s+r.p,0)/days):null;
+  c.innerHTML=
+   '<div class="kv"><span>七日均重</span><b>'+cur.toFixed(1)+' kg</b></div>'+
+   '<div class="kv"><span>已减</span><b>'+done.toFixed(1)+' kg</b></div>'+
+   '<div class="kv"><span>还差</span><b>'+left.toFixed(1)+' kg</b></div>'+
+   '<div class="kv"><span>近一周变化</span><b>'+(rate!==null?(rate>=0?'-':'+')+Math.abs(rate).toFixed(2)+' kg':'数据不足')+'</b></div>'+
+   '<div class="kv"><span>按当前速度还需</span><b>'+eta+'</b></div>'+
+   '<div class="kv"><span>蛋白质日均</span><b>'+(avgP!==null?avgP+' 克':'未记录')+'</b></div>';
+}
+
+function renderLog(){
+  const c=document.getElementById('logCard');
+  if(!LOG.length){c.innerHTML='<div class="empty">还没有记录。</div>';return;}
+  const s=LOG.slice().sort((a,b)=>a.key<b.key?1:-1).slice(0,30);
+  let h='<table><thead><tr><th>日期</th><th>体重</th><th>热量</th><th>蛋白</th></tr></thead><tbody>';
+  s.forEach(r=>{h+='<tr><td>'+r.key.slice(5)+'</td><td>'+(r.w?r.w.toFixed(1):'—')+'</td><td>'+
+    (r.k||'—')+'</td><td>'+(r.p||'—')+'</td></tr>';});
+  c.innerHTML=h+'</tbody></table>';
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected','false'));
+    b.setAttribute('aria-selected','true');
+    ['today','trend','how','rule'].forEach(t=>{document.getElementById('tab-'+t).hidden=(t!==b.dataset.tab);});
+    window.scrollTo({top:0});
+  };
+});
+
+document.getElementById('save').onclick=async()=>{
+ try{
+  const rec={key:key(),
+    w:+document.getElementById('fW').value||null,
+    k:+document.getElementById('fK').value||null,
+    p:+document.getElementById('fP').value||null,
+    f:+document.getElementById('fF').value||null,
+    c:+document.getElementById('fC').value||null};
+  if(!rec.w&&!rec.k&&!rec.p){say('msg','至少填一项再保存。',true);return;}
+  const i=LOG.findIndex(r=>r.key===rec.key);
+  const upd=i>=0; if(upd)LOG[i]=rec; else LOG.push(rec);
+  await store.set('cut:log',LOG);
+  renderRx();renderSpark();renderStat();renderLog();
+  let extra='';
+  if(rec.p&&rec.p<140) extra='<br><b>蛋白质今天没到 140 克。</b>这是三条硬条件里最容易漏的一条，睡前一杯牛奶或者一勺蛋白粉就能补上。';
+  const n=weights().length;
+  say('msg','<b>'+(upd?'已更新今天':'已保存，第 '+n+' 天')+'</b>'+
+    (rec.w?'<br>今天 '+rec.w.toFixed(1)+' kg。单日数字不用在意，看趋势页的粗线。':'')+extra);
+ }catch(e){say('msg','保存出错：'+e.message,true);}
+};
+
+document.getElementById('exp').onclick=()=>{
+  if(!LOG.length){say('dataMsg','还没有记录可以导出。',true);return;}
+  const t=LOG.slice().sort((a,b)=>a.key<b.key?-1:1).map(r=>
+    r.key+'  体重'+(r.w||'-')+'kg 热量'+(r.k||'-')+' 蛋白'+(r.p||'-')+'g 脂肪'+(r.f||'-')+'g 碳水'+(r.c||'-')+'g').join('\n');
+  const box=document.getElementById('expBox'); box.hidden=false; box.value=t; box.focus(); box.select();
+  say('dataMsg','下面的文字长按全选复制就行。');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(
+    ()=>say('dataMsg','<b>已复制到剪贴板。</b>下面也留了一份。'),()=>{});
+};
+let armed=false;
+document.getElementById('wipe').onclick=async()=>{
+  const b=document.getElementById('wipe');
+  if(!armed){armed=true;b.textContent='再点一次就真的删了';
+    say('dataMsg','这会清空全部记录，无法恢复。不想删就切到别的页签。',true);
+    setTimeout(()=>{armed=false;b.textContent='清除全部记录';},6000);return;}
+  armed=false;b.textContent='清除全部记录';
+  LOG=[];ADJ=0;await store.set('cut:log',LOG);await store.set('cut:adj',0);
+  renderRx();renderSpark();renderStat();renderLog();say('dataMsg','记录已清空。');
+};
+
+boot();
+</script>
+</body>
+</html>

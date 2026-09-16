@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>睡眠重建方案</title>
+<style>
+:root{
+  --ground:#EDF0F3;--surface:#FFFFFF;--ink:#17212B;--muted:#5C6B78;
+  --line:#CFD7DE;--done:#1F6F5C;--brass:#8A5A2B;--soft:#E3E8EC;
+  --bad:#A03A22;--night:#2B3A4A;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 80px}
+header{padding:26px 0 0}
+h1{font-size:26px;line-height:1.25;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+
+/* 处方卡 */
+.rx{background:var(--night);color:#fff;border-radius:10px;padding:18px;margin-top:16px}
+.rxtop{font-size:13px;color:#A8B6C4;margin-bottom:10px}
+.rxrow{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap}
+.rxbig{font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.rxsep{color:#5D7185;font-size:22px}
+.rxlab{font-size:12.5px;color:#A8B6C4;display:block;font-weight:400;letter-spacing:0}
+.rxfoot{margin-top:14px;padding-top:12px;border-top:1px solid #3D4F60;font-size:13.5px;color:#C5D0DA}
+.eff{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.eff div{flex:1;min-width:110px}
+.eff b{display:block;font-size:20px;font-weight:700}
+.eff span{font-size:12.5px;color:#A8B6C4}
+
+button{font-family:inherit;font-size:14px;cursor:pointer;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 14px}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.small{padding:5px 10px;font-size:13px}
+
+nav.tabs{position:sticky;top:0;z-index:20;background:var(--ground);padding:12px 0 10px;margin-top:16px;
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{white-space:nowrap;border-radius:999px;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+section[hidden]{display:none}
+h2{font-size:19px;font-weight:700;margin:26px 0 10px}
+h2:first-child{margin-top:4px}
+h3{font-size:16px;font-weight:600;margin:20px 0 8px}
+p{margin:0 0 12px}
+.note{font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.card.flat{background:transparent;border-style:dashed}
+.warn{border-left:3px solid var(--brass);padding-left:13px;margin:14px 0;font-size:14.5px}
+.stop{border-left:3px solid var(--bad);padding-left:13px;margin:14px 0;font-size:14.5px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--soft);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv b{font-weight:600;white-space:nowrap}
+ol.steps{padding-left:22px;margin:0 0 12px}
+ol.steps li{margin-bottom:8px}
+
+/* 表单 */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:5px}
+.field .hint{font-size:12.5px;color:var(--muted);font-weight:400;margin-top:3px}
+input[type=time],input[type=number],input[type=text],textarea{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;
+  font-family:inherit;font-size:16px;background:var(--surface);color:var(--ink)}
+textarea{min-height:76px;resize:vertical;line-height:1.55}
+.two{display:flex;gap:10px}
+.two>.field{flex:1}
+
+/* 打卡 */
+.check{display:flex;align-items:flex-start;gap:11px;padding:12px;border:1px solid var(--line);
+  border-radius:9px;margin-bottom:8px;background:var(--surface);cursor:pointer}
+.check[data-on="1"]{border-color:var(--done);background:#F4FAF8}
+.box{width:23px;height:23px;flex:none;border:1.5px solid var(--line);border-radius:6px;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;background:var(--surface)}
+.check[data-on="1"] .box{background:var(--done);border-color:var(--done)}
+.check .t{font-size:15px;line-height:1.45}
+.check .d{font-size:12.5px;color:var(--muted);display:block;margin-top:2px}
+
+/* 周格 */
+.wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+.wgrid div{aspect-ratio:1;border-radius:5px;background:var(--soft);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+.wgrid div.ok{background:var(--done);border-color:var(--done);color:#fff}
+.wgrid div.part{background:#B9D6CB;border-color:#96BFB0;color:#1F4438}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:8px 5px;border-bottom:1px solid var(--soft)}
+th{font-weight:600;color:var(--muted);font-size:12.5px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.up{background:#DCEFE8;color:#17513F}
+.pill.hold{background:var(--soft);color:var(--muted)}
+.pill.down{background:#F4E0D9;color:#7E2C17}
+.msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:14px;line-height:1.55;
+  background:#DCEFE8;color:#17513F;border:1px solid #A9CFC1}
+.msg[hidden]{display:none}
+.msg.err{background:#F7E4DD;color:#7E2C17;border-color:#E0B7A8}
+#expBox{width:100%;margin-top:10px;font-size:13px;min-height:130px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>睡眠重建方案</h1>
+  <p class="sub">锚点是早上 8:30 起床。上床时间由数据决定，不由意志力决定。</p>
+
+  <div class="rx">
+    <div class="rxtop" id="rxStage">第一阶段 · 锚点期</div>
+    <div class="rxrow">
+      <div><span class="rxbig" id="rxBed">困了再睡</span><span class="rxlab">今晚上床</span></div>
+      <span class="rxsep">→</span>
+      <div><span class="rxbig">8:30</span><span class="rxlab">明早起床，不可协商</span></div>
+    </div>
+    <div class="eff">
+      <div><b id="rxEff">—</b><span>近七天睡眠效率</span></div>
+      <div><b id="rxTst">—</b><span>近七天平均睡着时长</span></div>
+      <div><b id="rxDays">0</b><span>已记录天数</span></div>
+    </div>
+    <div class="rxfoot" id="rxAdvice">先记满十四天，这期间不要强迫自己早睡。</div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="today" aria-selected="true">今天</button>
+  <button role="tab" data-tab="data" aria-selected="false">数据</button>
+  <button role="tab" data-tab="rule" aria-selected="false">规则</button>
+  <button role="tab" data-tab="caf" aria-selected="false">咖啡因</button>
+  <button role="tab" data-tab="deal" aria-selected="false">奖惩</button>
+</nav>
+
+<!-- ============ 今天 ============ -->
+<section id="tab-today">
+  <h2>昨晚的睡眠</h2>
+  <div class="card">
+    <div class="two">
+      <div class="field"><label>上床时间</label><input type="time" id="fBed" value="02:30"></div>
+      <div class="field"><label>起床时间</label><input type="time" id="fUp" value="08:30"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>躺下后多久睡着</label>
+        <input type="number" id="fLat" min="0" max="600" step="5" value="60">
+        <div class="hint">分钟。凭感觉估，别翻手机查</div></div>
+      <div class="field"><label>夜里醒着一共</label>
+        <input type="number" id="fWake" min="0" max="600" step="5" value="0">
+        <div class="hint">分钟。没醒过就填 0</div></div>
+    </div>
+    <div class="field"><label>昨天最后一次咖啡因是几点</label>
+      <input type="time" id="fCaf" value="13:00">
+      <div class="hint">咖啡、茶、奶茶、可乐、能量饮料都算。一整天没碰就填 00:00</div></div>
+  </div>
+
+  <h2>今天的行为打卡</h2>
+  <p class="note">这六条全是你能控制的。睡没睡着不在这里，因为那个控制不了。</p>
+  <div id="checks"></div>
+
+  <div class="card">
+    <button class="primary" id="saveDay" style="width:100%;padding:13px">保存今天的记录</button>
+    <div id="saveMsg" class="msg" hidden></div>
+    <p class="note" style="margin:12px 0 0">一天只保存一次。重复保存会覆盖当天的记录。</p>
+  </div>
+</section>
+
+<!-- ============ 数据 ============ -->
+<section id="tab-data" hidden>
+  <h2>本周打卡</h2>
+  <div class="card">
+    <div class="wgrid" id="wGrid"></div>
+    <p class="note" style="margin:12px 0 0">绿色是六项做满五项以上，浅绿是三到四项。一周里至少五天变绿才算达标。</p>
+  </div>
+
+  <h2>睡眠日记</h2>
+  <div class="card" id="diary"><div class="empty">还没有记录。</div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="expLog">复制成文字</button>
+    <button id="wipeLog">清除全部记录</button>
+  </div>
+  <div id="dataMsg" class="msg" hidden></div>
+  <textarea id="expBox" hidden readonly></textarea>
+  <p class="note" style="margin-top:14px">如果去睡眠门诊，把这份记录打印出来带上，医生会需要它。</p>
+</section>
+
+<!-- ============ 规则 ============ -->
+<section id="tab-rule" hidden>
+  <h2>先接受一件事</h2>
+  <p>入睡本身是不可控的。你没办法命令自己睡着，而且越努力想睡越睡不着，这个现象叫睡眠努力悖论。所以这份方案里没有任何一条是「今晚必须睡着」。</p>
+  <p>可控的只有三个，起床时间、光照、躺在床上的总时长。所有规则都围绕这三个转。</p>
+
+  <h2>第一阶段　第 1 到 14 天</h2>
+  <p>这两周<b>不需要</b>尝试早睡。困了再上床，哪怕还是两三点。这不是妥协，是先把锚点立稳再动别的。</p>
+  <div class="card">
+    <div class="kv"><span>每天 8:30 起床，含周末</span><b>误差半小时内</b></div>
+    <div class="kv"><span>起床后 30 分钟内出门见光</span><b>至少 15 分钟</b></div>
+    <div class="kv"><span>不补觉，不赖床</span><b>周末也不行</b></div>
+    <div class="kv"><span>午睡</span><b>不超过 20 分钟，不晚于 14:00</b></div>
+    <div class="kv"><span>褪黑素</span><b>0.5 到 1 毫克，傍晚 17:00 到 19:00</b></div>
+  </div>
+  <p class="note">褪黑素不是安眠药，它的作用是给生物钟发信号说天要黑了，靠的是时机不是剂量。睡前吃 3 到 10 毫克那种用法对你这种情况基本无效，剂量太大还可能让困意拖到第二天早上，把生物钟推得更后。</p>
+
+  <h2>第二阶段　第 15 天起，睡眠限制</h2>
+  <p>系统会从你前十四天的记录里算出平均睡着时长，然后给你一个处方上床时间。</p>
+  <div class="card">
+    <div class="kv"><span>处方卧床时长</span><b>平均睡着时长 + 30 分钟</b></div>
+    <div class="kv"><span>下限</span><b>不低于 5 小时</b></div>
+    <div class="kv"><span>上床时间</span><b>8:30 往前倒推</b></div>
+  </div>
+  <div class="warn">这个时间很可能<b>比你现在还晚</b>。这就是它反直觉的地方。原理是把躺着清醒的时间压到最低，让床重新变回「一躺下就睡着」的地方，同时把睡眠压力累积到足够强。</div>
+
+  <h3>床上的规矩</h3>
+  <ol class="steps">
+    <li>处方时间之前不许上床，困得不行也不行，去客厅待着。</li>
+    <li>上床后大约 20 分钟还没睡着，<b>起来离开床</b>。去别的地方做点无聊的事，看纸质书或者发呆，别开亮灯别碰手机。有困意了再回去。还睡不着就再起来，重复多少次都行。</li>
+    <li>床上只做两件事，睡觉和性生活。不在床上刷手机、看视频、工作、吃东西。这是要把「床等于清醒」这个已经形成的联结拆掉。</li>
+    <li><b>夜里不要看时间。</b>把闹钟转过去，手机放远。看时间只会让你开始算「还剩几小时」，那是过度觉醒的燃料。</li>
+  </ol>
+
+  <h3>什么时候可以提前</h3>
+  <div class="card">
+    <div class="kv"><span>近七天效率 ≥ 85%</span><b>上床时间提前 15 分钟</b></div>
+    <div class="kv"><span>80% 到 85%</span><b>保持不动</b></div>
+    <div class="kv"><span>&lt; 80%</span><b>往后退 15 分钟</b></div>
+  </div>
+  <p class="note">一次 15 分钟。从凌晨三点多挪到十二点半大概需要十二周。慢得让人不耐烦，但这是有效的速度。跳步会让整件事失效。</p>
+
+  <div class="stop">
+    第二阶段前两周你白天会明显更困，这是预期之内的，也是它起作用的机制。但<b>这两周不要开车</b>，也尽量别安排需要高度专注的重要工作。
+  </div>
+
+  <h2>下面这些情况先去医院</h2>
+  <p>有人说过你睡觉打呼噜，或者睡着后有憋气停顿，先查睡眠呼吸暂停，这套方案对那个无效。</p>
+  <p>躺下时腿有说不清的难受、必须动一动才舒服，那是另一个问题，需要单独看。</p>
+  <p>这个状态持续超过三个月、每周三个晚上以上，在医学上已经符合慢性失眠障碍的定义。它是可以诊断、有标准治疗的病，不是意志力问题。标准治疗叫失眠认知行为治疗，上面这套就是它的简化版，完整版通常更有效而且不依赖药物。北京几家大医院有睡眠门诊。</p>
+
+  <h2>跟健身的关系</h2>
+  <p>肌肉的修复和生长主要发生在睡眠里。长期每晚三四小时，训练效果会打很大折扣，酸痛也会拖得更久。另外睡眠不足直接导致面部水肿，这条跟你最初问的下颌线是直接相关的。</p>
+  <p><b>排优先级的话，睡眠在健身之上。</b>训练对睡眠有帮助，但别安排在睡前三小时内。下班直接去练、八九点结束，这个时间没问题。</p>
+</section>
+
+<!-- ============ 咖啡因 ============ -->
+<section id="tab-caf" hidden>
+  <h2>下午的咖啡和茶，是这件事里被低估最多的一环</h2>
+  <p>咖啡因的半衰期大约五到六小时。意思是你下午三点喝一杯，到晚上九点体内还剩一半，到凌晨三点还剩四分之一。</p>
+  <p>更关键的是它的作用方式。咖啡因不是让你「有精神」，它是<b>堵住腺苷受体</b>。腺苷是你醒着的时候不断累积的物质，累积得越多你越困，这就是睡眠压力的主要来源。咖啡因把接收口占住，所以你感觉不到困，但腺苷还在那儿堆着。</p>
+  <p>这正好解释了你那个最奇怪的症状。<b>为什么只睡三小时，第二晚还是睡不着。</b>如果你在下午靠咖啡或茶撑过白天，等于把已经累积起来的睡眠压力屏蔽掉了，到晚上它就使不上劲。这是一个会自我维持的循环，睡不好，白天靠咖啡因，晚上更睡不着。</p>
+  <div class="warn">置信度：中高。腺苷机制和半衰期是确定的，把你个人的症状完全归因于此则是推测，但这是最符合你描述的一个解释，也是成本最低的验证方向。</div>
+
+  <h2>规则</h2>
+  <div class="card">
+    <div class="kv"><span>硬性截止</span><b>13:00</b></div>
+    <div class="kv"><span>算数的</span><b>咖啡、奶茶、绿茶红茶乌龙、可乐、能量饮料</b></div>
+    <div class="kv"><span>容易漏的</span><b>抹茶、巧克力、某些止痛药</b></div>
+    <div class="kv"><span>不算</span><b>无咖啡因花草茶、大麦茶、水</b></div>
+  </div>
+
+  <h2>怎么戒这个下午的习惯</h2>
+  <p>直接断会头疼，通常持续两三天。两个更现实的办法。</p>
+  <p>一是<b>逐周前移</b>。这周截止到 16:00，下周 15:00，再下周 14:00，第四周 13:00。不容易有戒断反应。</p>
+  <p>二是<b>换掉动作而不是去掉动作</b>。下午想喝东西这件事，很多时候是想要那个起身、倒水、离开工位的动作，不是想要咖啡因。换成无咖啡因的茶或者气泡水，动作保留，成分去掉。这个替换的成功率比硬戒高。</p>
+  <p class="note">如果你下午是真的困到工作不下去，那说明夜里的问题更严重，答案是修睡眠，不是加咖啡。这条会越修越轻松。</p>
+</section>
+
+<!-- ============ 奖惩 ============ -->
+<section id="tab-deal" hidden>
+  <h2>先说什么样的奖惩会起反作用</h2>
+  <p>有一条必须先定死。<b>奖惩只能挂在行为上，绝对不能挂在睡着与否上。</b></p>
+  <p>如果你给自己定「今晚十二点前睡着就奖励，睡不着就惩罚」，结果会是躺在床上一边睡不着一边想着要被罚，焦虑上升，然后更睡不着。这等于直接给失眠的核心机制加燃料。置信度：高，这是失眠认知行为治疗里明确要避免的做法。</p>
+  <p>所以下面所有的判定，都只看那六项打卡，不看你睡了几个小时。</p>
+
+  <h2>三种机制，按有效性排</h2>
+  <h3>一，押金制</h3>
+  <p>行为经济学里证据最硬的一种。核心是<b>损失厌恶</b>，人对失去的敏感度大约是对等额获得的两倍，所以「做不到就会失去已经属于我的钱」比「做到了给你钱」有效得多。</p>
+  <p>具体做法，提前给一个第三方一笔钱，比如两千。每周结算，达标就退回一部分，不达标就扣掉。关键在于<b>扣掉的钱必须真的没了</b>，最好是捐给一个你不喜欢的机构，而不是存起来以后再花。置信度：中高，押金合约的效果在多个行为干预研究里被验证过，但长期效果在停止后容易回落。</p>
+  <p class="note">执行上，你那位健身伙伴是现成的托管人。</p>
+
+  <h3>二，社会监督</h3>
+  <p>每周把这一页的周格截图发给她。不需要她做任何事，<b>被人看见本身就是机制</b>。这是成本最低的一种，几乎不需要额外投入。</p>
+
+  <h3>三，解锁式奖励</h3>
+  <p>把一件你本来就会做、而且挺想做的事，绑定成只有达标才能做。比如某个游戏、某部想看的片、周末的某个消费。注意是<b>你本来就会做的事</b>，不是买个新东西当奖品，后者的效果衰减很快。</p>
+
+  <h2>关于连续天数</h2>
+  <p>不要用连续天数。连续打卡的问题是断一次就崩，而且你一定会断，出差、生病、突发的事都可能断。断了之后人会觉得「反正已经毁了」，然后整个放弃。</p>
+  <p>所以判定用的是<b>一周七天里达标五天</b>，允许失手两次。这个设计是故意的。</p>
+
+  <h2>写下你自己的约定</h2>
+  <div class="card">
+    <div class="field"><label>本周达标（七天里五天变绿）我会得到</label>
+      <textarea id="dReward" placeholder="写具体一点，越具体越管用"></textarea></div>
+    <div class="field"><label>本周不达标我会失去</label>
+      <textarea id="dPenalty" placeholder="要小而即时，不要大而遥远"></textarea></div>
+    <div class="field"><label>谁来监督 / 谁托管押金</label>
+      <input type="text" id="dWitness" placeholder="写下名字"></div>
+    <button class="primary" id="dSave">保存约定</button>
+    <div id="dealMsg" class="msg" hidden></div>
+    <p class="note" style="margin:12px 0 0">写完记得截图发给对方。一个只有你自己知道的约定，效果接近于零。</p>
+  </div>
+
+  <div class="warn">最后一句。惩罚要<b>小而即时</b>，不要大而遥远。一周一结算已经是可接受范围的上限，月度结算基本没用。</div>
+</section>
+
+</div>
+
+<script>
+const mem={};
+const store={
+  async get(k){
+    try{const r=await window.storage.get(k); if(r) return JSON.parse(r.value);}catch(e){}
+    try{const s=localStorage.getItem(k); if(s!==null) return JSON.parse(s);}catch(e){}
+    return mem[k]??null;
+  },
+  async set(k,v){
+    mem[k]=v;
+    try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+    try{await window.storage.set(k,JSON.stringify(v));}catch(e){}
+  }
+};
+
+const CHECKS=[
+ {id:'up',t:'8:30 起床，误差半小时内',d:'整个方案里唯一完全由你控制的一条'},
+ {id:'light',t:'起床 30 分钟内出门见光，至少 15 分钟',d:'隔着窗户不算。这是把生物钟往前拉最强的信号'},
+ {id:'nonap',t:'没有补觉，没有赖床',d:'午睡不超过 20 分钟且不晚于 14:00 也算合格'},
+ {id:'caf',t:'13:00 之后没碰任何咖啡因',d:'咖啡、茶、奶茶、可乐都算'},
+ {id:'bed',t:'床上没有刷手机、看视频、工作',d:'要把「床等于清醒」这个联结拆掉'},
+ {id:'rx',t:'按处方时间上床，没提前躺下',d:'第一阶段困了再上床就算合格'}
+];
+
+let DIARY=[], TODAY={}, DEAL={};
+
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function toMin(t){if(!t)return 0;const[a,b]=t.split(':').map(Number);return a*60+b;}
+function span(bed,up){let s=toMin(up)-toMin(bed);if(s<=0)s+=1440;return s;}
+function fmtH(m){const h=Math.floor(m/60),x=Math.round(m%60);return h+' 小时'+(x?' '+x+' 分':'');}
+function fmtT(m){m=((m%1440)+1440)%1440;return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+
+async function boot(){
+  const d=await store.get('sleep:diary'); if(Array.isArray(d)) DIARY=d;
+  const t=await store.get('sleep:today'); if(t&&t.key===todayKey()) TODAY=t; else TODAY={key:todayKey(),c:{}};
+  const dl=await store.get('sleep:deal'); if(dl) DEAL=dl;
+  document.getElementById('dReward').value=DEAL.reward||'';
+  document.getElementById('dPenalty').value=DEAL.penalty||'';
+  document.getElementById('dWitness').value=DEAL.witness||'';
+  renderChecks(); renderRx(); renderWeek(); renderDiary();
+}
+
+function renderChecks(){
+  const h=document.getElementById('checks'); h.innerHTML='';
+  CHECKS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='check'; el.dataset.on=TODAY.c[c.id]?'1':'0';
+    el.innerHTML='<div class="box">✓</div><div class="t">'+c.t+'<span class="d">'+c.d+'</span></div>';
+    el.onclick=async()=>{TODAY.c[c.id]=!TODAY.c[c.id];await store.set('sleep:today',TODAY);renderChecks();renderWeek();};
+    h.appendChild(el);
+  });
+}
+
+/* 核心计算 */
+function stats(n){
+  const a=DIARY.slice(0,n);
+  if(!a.length) return null;
+  let tib=0,tst=0;
+  a.forEach(r=>{const s=span(r.bed,r.up);tib+=s;tst+=Math.max(0,s-r.lat-r.wake);});
+  return {eff:tst/tib*100, tst:tst/a.length, tib:tib/a.length, n:a.length};
+}
+
+function renderRx(){
+  const n=DIARY.length;
+  document.getElementById('rxDays').textContent=n;
+  const s=stats(7);
+  document.getElementById('rxEff').textContent=s?Math.round(s.eff)+'%':'—';
+  document.getElementById('rxTst').textContent=s?fmtH(s.tst):'—';
+
+  const stage=document.getElementById('rxStage');
+  const bed=document.getElementById('rxBed');
+  const adv=document.getElementById('rxAdvice');
+
+  if(n<14){
+    stage.textContent='第一阶段 · 锚点期';
+    bed.textContent='困了再睡';
+    adv.innerHTML='还差 <b>'+(14-n)+'</b> 天进入第二阶段。这期间不要强迫自己早睡，只把 8:30 起床和早上见光这两条做住。';
+    return;
+  }
+  stage.textContent='第二阶段 · 睡眠限制';
+  const base=stats(14);
+  let tib=Math.max(300, Math.round((base.tst+30)/15)*15);
+  const steps=Math.floor((n-14)/7);
+  const s7=stats(7);
+  let adj=0, pill='', txt='';
+  if(s7&&s7.n>=7){
+    if(s7.eff>=85){adj=15;pill='<span class="pill up">可以提前 15 分钟</span>';txt='近七天效率达标。';}
+    else if(s7.eff>=80){adj=0;pill='<span class="pill hold">保持不动</span>';txt='近七天效率在中间区，再观察一周。';}
+    else{adj=-15;pill='<span class="pill down">往后退 15 分钟</span>';txt='近七天效率偏低，卧床时间需要再压缩一点。';}
+  }
+  const cum=(TODAY.cum||0);
+  tib=Math.max(300, tib+cum);
+  const bedMin=toMin('08:30')-tib;
+  bed.textContent=fmtT(bedMin);
+  adv.innerHTML=pill+' '+txt+' 当前处方卧床 '+fmtH(tib)+
+    '。<br>调整后请在下方按钮确认，系统会把它记进处方。'+
+    '<div style="margin-top:10px"><button class="small" id="applyAdj">应用调整</button></div>';
+  const btn=document.getElementById('applyAdj');
+  if(btn) btn.onclick=async()=>{
+    TODAY.cum=(TODAY.cum||0)+adj; await store.set('sleep:today',TODAY); renderRx();
+  };
+}
+
+function renderWeek(){
+  const g=document.getElementById('wGrid'); g.innerHTML='';
+  const names=['一','二','三','四','五','六','日'];
+  const last7=DIARY.slice(0,7).reverse();
+  for(let i=0;i<7;i++){
+    const d=document.createElement('div');
+    const r=last7[i];
+    let sc=0;
+    if(i===6){ sc=Object.values(TODAY.c||{}).filter(Boolean).length; }
+    else if(r){ sc=r.score||0; }
+    if(sc>=5) d.className='ok';
+    else if(sc>=3) d.className='part';
+    d.textContent=sc||'';
+    g.appendChild(d);
+  }
+}
+
+function renderDiary(){
+  const c=document.getElementById('diary');
+  if(!DIARY.length){c.innerHTML='<div class="empty">还没有记录。</div>';return;}
+  let h='<table><thead><tr><th>日期</th><th>卧床</th><th>睡着</th><th>效率</th><th>打卡</th></tr></thead><tbody>';
+  DIARY.slice(0,30).forEach(r=>{
+    const s=span(r.bed,r.up), t=Math.max(0,s-r.lat-r.wake);
+    h+='<tr><td>'+r.key.slice(5)+'</td><td>'+r.bed+'→'+r.up+'</td><td>'+(t/60).toFixed(1)+'h</td><td>'+
+       Math.round(t/s*100)+'%</td><td>'+(r.score||0)+'/6</td></tr>';
+  });
+  c.innerHTML=h+'</tbody></table>';
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected','false'));
+    b.setAttribute('aria-selected','true');
+    ['today','data','rule','caf','deal'].forEach(t=>{
+      document.getElementById('tab-'+t).hidden=(t!==b.dataset.tab);
+    });
+    window.scrollTo({top:0});
+  };
+});
+
+function say(id,html,isErr){
+  const e=document.getElementById(id);
+  e.className='msg'+(isErr?' err':''); e.innerHTML=html; e.hidden=false;
+}
+document.getElementById('saveDay').onclick=async()=>{
+ try{
+  const bed=document.getElementById('fBed').value, up=document.getElementById('fUp').value;
+  if(!bed||!up){say('saveMsg','上床和起床时间都要填，两个都不能空。',true);return;}
+  const rec={
+    key:todayKey(), bed, up,
+    lat:+document.getElementById('fLat').value||0,
+    wake:+document.getElementById('fWake').value||0,
+    caf:document.getElementById('fCaf').value,
+    score:Object.values(TODAY.c||{}).filter(Boolean).length
+  };
+  const i=DIARY.findIndex(r=>r.key===rec.key);
+  const upd=i>=0; if(upd) DIARY[i]=rec; else DIARY.unshift(rec);
+  await store.set('sleep:diary',DIARY);
+  renderRx(); renderWeek(); renderDiary();
+  const s=span(bed,up), t=Math.max(0,s-rec.lat-rec.wake);
+  say('saveMsg','<b>'+(upd?'已更新今天的记录':'已保存，这是第 '+DIARY.length+' 天')+'</b><br>'+
+    '卧床 '+fmtH(s)+'，估计睡着 '+fmtH(t)+'，效率 '+Math.round(t/s*100)+'%，打卡 '+rec.score+'/6。<br>'+
+    '去「数据」那一页可以看到它。');
+ }catch(err){ say('saveMsg','保存时出错了，把这行发给我：'+err.message,true); }
+};
+
+document.getElementById('dSave').onclick=async()=>{
+  DEAL={reward:document.getElementById('dReward').value,
+        penalty:document.getElementById('dPenalty').value,
+        witness:document.getElementById('dWitness').value};
+  await store.set('sleep:deal',DEAL);
+  say('dealMsg','<b>约定已保存。</b>现在截图发给'+(DEAL.witness||'监督人')+'，没发出去的约定等于没有。');
+};
+
+document.getElementById('expLog').onclick=()=>{
+  if(!DIARY.length){say('dataMsg','还没有记录可以导出。',true);return;}
+  const t=DIARY.map(r=>{const s=span(r.bed,r.up),x=Math.max(0,s-r.lat-r.wake);
+    return r.key+'  上床'+r.bed+' 起床'+r.up+' 入睡耗时'+r.lat+'分 夜醒'+r.wake+'分 睡着'+(x/60).toFixed(1)+'h 效率'+Math.round(x/s*100)+'% 打卡'+(r.score||0)+'/6';}).join('\n');
+  say('dataMsg','下面的文字长按全选复制就行。');
+  const box=document.getElementById('expBox');
+  box.hidden=false; box.value=t; box.focus(); box.select();
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(
+    ()=>say('dataMsg','<b>已复制到剪贴板。</b>下面也留了一份，可以手动选。'),()=>{});
+};
+let wipeArmed=false;
+document.getElementById('wipeLog').onclick=async()=>{
+  const b=document.getElementById('wipeLog');
+  if(!wipeArmed){
+    wipeArmed=true; b.textContent='再点一次就真的删了';
+    say('dataMsg','这会清空全部睡眠记录，无法恢复。不想删的话切到别的页签就行。',true);
+    setTimeout(()=>{wipeArmed=false;b.textContent='清除全部记录';},6000);
+    return;
+  }
+  wipeArmed=false; b.textContent='清除全部记录';
+  DIARY=[]; await store.set('sleep:diary',DIARY);
+  renderRx();renderWeek();renderDiary();
+  say('dataMsg','记录已清空。');
+};
+
+boot();
+</script>
+</body>
+</html>
