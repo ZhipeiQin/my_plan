@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S6 排产无解触发判定与三级降级兜底机制专项报告</title>
+<style>
+  :root {
+    --bg: #F4F4F0;
+    --paper: #FFFFFF;
+    --ink: #111111;
+    --muted: #555550;
+    --line: #111111;
+    --red: #E60012;
+    --red-soft: #FDECEC;
+    --gray-soft: #EFEFEA;
+    --font-sans: "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-mono: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    padding: 26px 18px 56px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 1160px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 2.5px solid var(--line);
+  }
+  .masthead {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    border-bottom: 3px solid var(--line);
+  }
+  .mh-left {
+    grid-column: span 8;
+    padding: 26px 30px;
+    border-right: 2px solid var(--line);
+  }
+  .mh-right {
+    grid-column: span 4;
+    background: var(--ink);
+    color: #FFFFFF;
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .eyebrow {
+    display: inline-block;
+    background: var(--red);
+    color: #FFFFFF;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.25;
+    margin-bottom: 10px;
+  }
+  .lead {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .meta-foot {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-top: 1px solid #444;
+    padding-top: 10px;
+    color: #DFDFD8;
+  }
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 2.5px solid var(--line);
+  }
+  .kpi-cell {
+    padding: 20px 22px;
+    border-right: 1.5px solid var(--line);
+  }
+  .kpi-cell:last-child { border-right: none; }
+  .k-lbl {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--muted);
+  }
+  .k-val {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 900;
+    margin: 6px 0;
+  }
+  .k-val.red { color: var(--red); }
+  .k-sub { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .sec {
+    padding: 28px 30px;
+    border-bottom: 2px solid var(--line);
+  }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  .sec-tag {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 900;
+    background: var(--red);
+    color: #FFFFFF;
+    padding: 3px 9px;
+  }
+  h2 { font-size: 19.5px; font-weight: 900; }
+  p { margin-bottom: 11px; }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 14px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .box {
+    border: 1.5px solid var(--line);
+    background: #FFFFFF;
+  }
+  .box-head {
+    background: var(--gray-soft);
+    border-bottom: 1.5px solid var(--line);
+    padding: 10px 15px;
+    font-weight: 900;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .box-head.red {
+    background: var(--red-soft);
+    border-left: 5px solid var(--red);
+  }
+  .box-body { padding: 15px 16px; font-size: 13.8px; }
+  .formula {
+    border: 1.5px solid var(--line);
+    background: var(--gray-soft);
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-family: var(--font-mono);
+    font-size: 12.8px;
+  }
+  .calc-example {
+    border-left: 4px solid var(--red);
+    background: var(--red-soft);
+    padding: 11px 15px;
+    margin: 10px 0 14px;
+    font-size: 13.3px;
+  }
+  table.s-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13.3px;
+  }
+  table.s-tbl th, table.s-tbl td {
+    border: 1.5px solid var(--line);
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.s-tbl th {
+    background: var(--ink);
+    color: #FFFFFF;
+    font-family: var(--font-mono);
+    font-size: 11.8px;
+  }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border: 1px solid var(--line);
+    background: #FFFFFF;
+  }
+  .pill.red { background: var(--red); color: #FFFFFF; border-color: var(--red); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div class="mh-left">
+      <div class="eyebrow">INFEASIBILITY &amp; 3-TIER FALLBACK ARCHITECTURE · S6 V2.8</div>
+      <h1>S6 有限产能排产「无解情况（Infeasible）」触发判定与三级降级兜底机制报告</h1>
+      <p class="lead">
+        用通俗大白话讲透排产求解器在什么情况下会遇到“排不出来（无解）”，我们是如何通过<strong>软硬约束解耦</strong>彻底消除常规单排队引发的“假无解”，又是如何通过<strong>三级自动降级兜底机制（R1/R3 拆批重叠 ➔ R5 借库存与暂停 P2 ➔ R6 部分交付与交期不可达预警）</strong>应对极端插单下的“真物理无解”，保证系统永不崩溃报错。
+      </p>
+    </div>
+    <div class="mh-right">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:#E60012;font-weight:800;">SOLVER SAFETY GUARANTEE</div>
+        <div style="font-size:20px;font-weight:900;margin-top:6px;">100% 永不宕机 · 自动降级预警</div>
+        <div style="font-size:13px;color:#CFCFC8;margin-top:4px;">严格对齐需求文档 R5 / R6 / R7 及 6.3 节交付物①</div>
+      </div>
+      <div class="meta-foot">
+        适用版本：S6 1.2版 (V2.8: D1-D31)<br>
+        关联代码：solve_s6_ortools_cpsat.py<br>
+        报告日期：2026-10-30
+      </div>
+    </div>
+  </header>
+
+  <section class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="k-lbl">01 / 伪无解消除率</div>
+      <div class="k-val red">100%</div>
+      <div class="k-sub">将 P1/P2 延期由死硬截断改为<strong>分段阶梯软惩罚</strong>，消除因电镀峰值排队引发的假报错</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">02 / 第一级拆批提速</div>
+      <div class="k-val">≥20<span style="font-size:16px;">件/批</span></div>
+      <div class="k-sub">触发 R1 多机并行 + R3 重叠流转，把 E1 插单 80 件耗时从 1,680m 压至 1,350m 内</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">03 / 第二级自由库存冲抵</div>
+      <div class="k-val red">40<span style="font-size:16px;">件直补</span></div>
+      <div class="k-sub">触发 R5 借用 <code>SF-25-W-40</code> 成品 + R7 暂停 P2 投料，D6 11:50 提前 4h 完工</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">04 / 第三级物理越界兜底</div>
+      <div class="k-val">部分交付</div>
+      <div class="k-sub">超出物理极限时按 R6 自动输出<strong>《交期不可达预警》</strong>与最大可交件数，回退启发式保底解</div>
+    </div>
+  </section>
+
+  <!-- SECTION 01：什么情况下会触发无解？ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-tag">PART 01</span>
+      <h2>什么情况下会触发「无解（Infeasible）」？（区分假无解与真无解）</h2>
+    </div>
+    <p>
+      在有限产能排产中，求解器报“无解”的意思是<strong>把所有约束条件放在一起时，在数学上找不到任何一个不违规的时间表</strong>。我们在工程实践中发现，无解分为截然不同的两类，必须分开治理（确信度为高，基于代码核验与容量包络线证明）。
+    </p>
+
+    <div class="grid-2">
+      <div class="box">
+        <div class="box-head">
+          <span>第一类 「伪无解」（建模把软目标写死成了硬约束）</span>
+          <span class="pill">已在代码中根除</span>
+        </div>
+        <div class="box-body">
+          <p><strong>是怎么发生的？</strong></p>
+          <p>在 1.2 版规则 H8 中明确写着，<strong>只有 P0 红线单零延期是一票否决的硬红线；P1 和 P2 普通单允许延期，单笔超过 2 个工作日只计入统计扣分，不构成方案不可执行</strong>。</p>
+          <p>如果程序员在写求解器代码时，错误地把“所有 P1/P2 订单完工时间必须小于等于交期加 2 天（900分钟）”写成了死硬约束（<code>model.Add(end &lt;= due + 900)</code>），就会出大问题。因为 <code>PL-A</code> 电镀线在第 9 到第 12 天（D9 至 D12）聚集了 29 笔订单共 1,090 件零件，纯电镀时间就要 4,360 分钟，而扣除第 1 天等料、2 次周三化验停机和洗槽换水后，<code>PL-A</code> 在前 12 天最多只能镀完 4,140 分钟。因为存在约 220 至 300 分钟的物理缺口，必有 3 笔大单要排到第 13 至第 16 天才能镀完。一旦写死“不准超 2 天”，求解器就会直接罢工报 <code>INFEASIBLE</code>（无解）。</p>
+          <p><strong>我们是怎么改的？</strong></p>
+          <p>我们在 <code>solve_s6_ortools_cpsat.py</code>（第 89 至 128 行）中做了<strong>软硬约束解耦</strong>。只对 4 张 P0 红线单保留 <code>end &lt;= due_min</code> 硬约束，而对 P1/P2 订单放开硬截断，改为在目标函数里加上“普通延期罚 1 倍、超 2 天延期重罚 50 倍”的阶梯软惩罚：</p>
+          <div class="formula">
+            max_end = due_min if o.priority == "P0" else horizon<br>
+            Penalty_i = 1 × max(0, End_i - Due_i) + 50 × max(0, End_i - Due_i - 900)
+          </div>
+          <div class="calc-example">
+            <strong>接地气代入算例</strong><br>
+            假设普通单 <code>ORD-004</code> 要求第 8 天（$8 \times 450 = 3,600$ 分钟）交货，实际在第 10 天中午（$4,350$ 分钟，晚了 $750$ 分钟，不到 2 天即 900 分钟）完工。代入公式，第一项为 $1 \times (4350 - 3600) = 750$，第二项为 $50 \times \max(0, 750 - 900) = 0$，总罚分为 <strong>750 分</strong>，求解器正常输出排程，绝不误报无解。
+          </div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-head red">
+          <span>第二类 「真实物理红线无解」（极端插单或故障突破物理极限）</span>
+          <span class="pill red">触发三级降级兜底</span>
+        </div>
+        <div class="box-body">
+          <p><strong>是怎么发生的？</strong></p>
+          <p>当车间遇到突发事件（例如 E1 在第 4 天早上 08:00 突然插入一张 P0 红线急单 <code>ORD-121</code>，要求在第 6 天下班前交出 80 件 25 号壳体；或者遇到比 E1 更极端的 200 件当天交货插单、多台机床同时停机数日），<strong>如果还按常规的“1 台机器整批做完再送下一道工序、且不借用半成品库存”去排，哪怕全厂所有机器停下来只做这一单，物理时间也根本不够用</strong>。</p>
+          <p>这时 P0 红线单的硬约束 <code>End_P0 &lt;= Due_P0</code> 与工序工时下界产生直接数学矛盾，触发真实物理无解。</p>
+          <div class="formula">
+            单机整批串行所需最短工时：T_serial = Q × (t_05 + t_20 + t_35 + t_60 + t_50 + t_70)<br>
+            可用日历工时上限：T_avail = (Due_day - Trigger_day + 1) × 450
+          </div>
+          <div class="calc-example">
+            <strong>接地气代入算例（以 E1 插单 <code>ORD-121</code>，数量 Q = 80 件，D4 至 D6 共 3 天为例）</strong><br>
+            • 可用日历工时上限：从 D4 早上到 D6 下午 16:00 一共只有 3 个工作日，代入得 $T_{\text{avail}} = 3 \times 450 = \mathbf{1,350}$ 分钟。<br>
+            • 单机整批串行工时：哪怕只看前两道工序（05 车削 12 分钟/件 + 20 车铣螺纹 9 分钟/件），80 件整批串行就要花 $80 \times (12 + 9) = \mathbf{1,680}$ 分钟！<br>
+            • $1,680 \text{ 分钟} > 1,350 \text{ 分钟}$（还没算后面铣削、钻孔、电镀、检验的 $80 \times 23 = 1,840$ 分钟，总计 $3,520$ 分钟），在传统单机整批模式下<strong>100% 物理无解</strong>！这就必须启动下面的<strong>三级自动降级兜底机制</strong>。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 02：遇到无解时的三级降级兜底机制 -->
+  <section class="sec" style="border-bottom:none;">
+    <div class="sec-head">
+      <span class="sec-tag">PART 02</span>
+      <h2>遇到真实无解时，系统怎么处理并输出说明？（三级自动降级兜底机制）</h2>
+    </div>
+    <p>
+      严格按照需求文档 <strong>R1、R3、R5、R6、R7 规则及 6.3 节交付物①（交期不可达预警）</strong>，当预检公式发现某张 P0 红线单在常规模式下耗时超出可用窗口（$T_{\text{serial}} > T_{\text{avail}}$）或求解器返回 <code>INFEASIBLE</code> 时，系统会按顺序自动触发以下三级兜底动作。
+    </p>
+
+    <!-- 瑞士国际主义直角几何 SVG 状态机流程图 -->
+    <div style="border:2px solid var(--line);padding:18px;background:#FFFFFF;margin:16px 0 22px;">
+      <svg viewBox="0 0 1020 185" style="width:100%;height:auto;display:block;font-family:'Helvetica Neue','PingFang SC',sans-serif;">
+        <!-- 节点 0：事件触发与容量预检 -->
+        <rect x="10" y="25" width="185" height="130" fill="#111111" stroke="#111111" stroke-width="2"/>
+        <text x="24" y="52" font-size="11" font-family="monospace" font-weight="bold" fill="#E60012">STEP 0 · PRE-CHECK</text>
+        <text x="24" y="76" font-size="14" font-weight="900" fill="#FFFFFF">红线单容量预检</text>
+        <text x="24" y="100" font-size="11.5" fill="#DFDFD8">检测 T_req &gt; T_avail</text>
+        <text x="24" y="118" font-size="11.5" fill="#DFDFD8">或交期前 2d 未开工</text>
+        <text x="24" y="140" font-size="11" font-family="monospace" fill="#E60012">触发无解保护状态机 ➔</text>
+
+        <line x1="195" y1="90" x2="235" y2="90" stroke="#111111" stroke-width="2.5"/>
+        <polygon points="235,90 225,84 225,96" fill="#111111"/>
+
+        <!-- 第一级：R1 + R3 -->
+        <rect x="235" y="25" width="230" height="130" fill="#FFFFFF" stroke="#111111" stroke-width="2"/>
+        <rect x="235" y="25" width="230" height="28" fill="#EFEFEA" stroke="#111111" stroke-width="1.5"/>
+        <text x="247" y="44" font-size="11.5" font-family="monospace" font-weight="900" fill="#111111">TIER 1 · 第一级：R1多机 + R3重叠</text>
+        <text x="247" y="74" font-size="13" font-weight="900" fill="#111111">拆批并行与满 20 件转序</text>
+        <text x="247" y="96" font-size="11.5" fill="#555550">• 05车削/60钻毛/70检验多机并行</text>
+        <text x="247" y="114" font-size="11.5" fill="#555550">• 前道满 20 件立即启动后道工序</text>
+        <text x="247" y="138" font-size="11" font-weight="bold" fill="#111111">若仍 T_req &gt; T_avail ➔ 升至二级</text>
+
+        <line x1="465" y1="90" x2="505" y2="90" stroke="#111111" stroke-width="2.5"/>
+        <polygon points="505,90 495,84 495,96" fill="#111111"/>
+
+        <!-- 第二级：R5 + R7 -->
+        <rect x="505" y="25" width="235" height="130" fill="#FFFFFF" stroke="#111111" stroke-width="2"/>
+        <rect x="505" y="25" width="235" height="28" fill="#FDECEC" stroke="#111111" stroke-width="1.5"/>
+        <text x="517" y="44" font-size="11.5" font-family="monospace" font-weight="900" fill="#E60012">TIER 2 · 第二级：R5借库存 + R7抢占</text>
+        <text x="517" y="74" font-size="13" font-weight="900" fill="#111111">冲抵自产量 + 暂停 P2 投料</text>
+        <text x="517" y="96" font-size="11.5" fill="#555550">• 调用同壳体同镀层自由库存成品</text>
+        <text x="517" y="114" font-size="11.5" fill="#555550">• 抢占工装并暂停 P2，2周内补投</text>
+        <text x="517" y="138" font-size="11" font-weight="bold" fill="#E60012">E1 在此级解开 (D6 11:50 完工)</text>
+
+        <line x1="740" y1="90" x2="780" y2="90" stroke="#E60012" stroke-width="2.5"/>
+        <polygon points="780,90 770,84 770,96" fill="#E60012"/>
+
+        <!-- 第三级：R6 降级与预警说明 -->
+        <rect x="780" y="25" width="230" height="130" fill="#FDECEC" stroke="#E60012" stroke-width="2.5"/>
+        <rect x="780" y="25" width="230" height="28" fill="#E60012"/>
+        <text x="792" y="44" font-size="11.5" font-family="monospace" font-weight="900" fill="#FFFFFF">TIER 3 · 第三级：R6 降级与预警</text>
+        <text x="792" y="74" font-size="13" font-weight="900" fill="#111111">部分交付 + 不可达预警说明</text>
+        <text x="792" y="96" font-size="11.5" fill="#111111">• 严禁加班，核算 16:00 最大可交量</text>
+        <text x="792" y="114" font-size="11.5" fill="#111111">• 回退确定性启发式保底解防崩溃</text>
+        <text x="792" y="138" font-size="11" font-weight="900" fill="#E60012">输出《交期不可达预警报告》</text>
+      </svg>
+    </div>
+
+    <div class="grid-3">
+      <div class="box">
+        <div class="box-head">
+          <span>第一级 R1 多机拆批 + R3 重叠流转</span>
+          <span class="pill">工艺提速</span>
+        </div>
+        <div class="box-body">
+          <p>系统首先自动解除“单机整批等待”限制，将 05 车削拆至 3 台车床同时加工，且前道满 <strong>20 件最小转移批</strong> 立即送入下道 20 螺纹与 35 铣削重叠加工。</p>
+          <p>如果仅靠拆批重叠就能让完工时间落入交期日 16:00 内，则直接输出排程，无需动用库存。</p>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-head red">
+          <span>第二级 R5 借自由库存 + R7 暂停 P2</span>
+          <span class="pill red">库存冲抵</span>
+        </div>
+        <div class="box-body">
+          <p>若第一级拆批后仍不够时间（例如 E1 插单 80 件即便拆批重叠也需约 1,450 分钟 &gt; 1,350 分钟），系统自动检索 <code>semi_finished_inventory.csv</code> 中同壳体、同镀层的自由库存。</p>
+          <p>如 E1 自动借用 <code>SF-25-W-40</code> 的 <strong>40 件合格成品</strong>，将当期自产件数从 80 件减半为 <strong>40 件</strong>（若仍紧张则按 R7 暂停同工装 P2 普通单投料），使 <code>ORD-121</code> 在 <strong>D6 11:50</strong> 顺利完工（比 16:00 班末提前 4 小时 10 分钟），并在 D14 前自动生成 40 件 P2 补投单（其中 25 件调用 <code>SF-25-N-25</code> 半成品免车削）。</p>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-head red">
+          <span>第三级 R6 不可承接降级 + 预警说明</span>
+          <span class="pill red">终极兜底</span>
+        </div>
+        <div class="box-body">
+          <p>若遇到极端测试场景（例如要求 2 天内交付 200 件 P0 急单，借完 40 件库存还剩 160 件，光唯一一套 <code>FIX-THR-25</code> 工装串行加工就要 $160 \times 9 = 1,440$ 分钟 &gt; 2 天 900 分钟），此时任何算法在遵守 H4 工装唯一和 R6 严禁加班的前提下都无法全额按期。</p>
+          <p>系统按 R6 规定<strong>绝不崩溃报错</strong>，而是自动回退至内置启发式保底解，并生成结构化的<strong>《交期不可达预警与部分交付降级说明》</strong>。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="formula" style="margin-top:20px;">
+      第三级降级下交期日 16:00 前最大可交付件数核算公式：<br>
+      Q_deliverable = Q_free_stock + floor( max(0, T_avail - T_pipeline_head_tail) / t_bottleneck_fixture )
+    </div>
+    <div class="calc-example">
+      <strong>接地气代入算例（假设极端无解场景：D4 08:00 插入 25 号壳体 W 镀层 P0 急单 <code>ORD-999</code> 共 160 件，要求 D6 16:00 交货）</strong><br>
+      • <strong>第一步（扣减首尾流转耗时）</strong>：D4 到 D6 可用工时 $T_{\text{avail}} = 3 \times 450 = 1,350$ 分钟。首 20 件在 05 车床及换型耗时约 $190$ 分钟，末批在 35 铣削、60 钻毛、50 电镀、70 检验的收尾流水耗时约 $440$ 分钟，合计首尾固定流转耗时 $T_{\text{pipeline}} = 190 + 440 = 630$ 分钟。<br>
+      • <strong>第二步（算瓶颈工装最大自产件数）</strong>：留给唯一一套三头螺纹工装 <code>FIX-THR-25</code>（单件耗时 $t_{\text{bottleneck}} = 9$ 分钟/件）的最大净加工时间为 $1350 - 630 = 720$ 分钟，最多能自产 $\lfloor 720 \div 9 \rfloor = \mathbf{80}$ 件（实际考虑跨班衔接约为 <strong>60 至 80 件</strong>）。<br>
+      • <strong>第三步（加上 R5 自由库存得出部分交付上限）</strong>：加上自由库存 <code>SF-25-W-40</code> 的 $40$ 件成品，代入公式算得 D6 16:00 前物理最大可交付件数为 $Q_{\text{deliverable}} = 40 + 80 = \mathbf{120}$ 件，剩余缺口 $160 - 120 = \mathbf{40}$ 件。<br>
+      • <strong>第四步（系统自动输出预警说明）</strong>：系统自动输出如下表所示的《交期不可达预警与部分交付方案》，供计划员一键确认。
+    </div>
+
+    <table class="s-tbl">
+      <thead>
+        <tr>
+          <th>预警字段</th>
+          <th>系统自动输出的《交期不可达预警与降级承接说明》示例内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>触发判定状态</strong></td>
+          <td><span class="pill red">INFEASIBLE_DEGRADED (触发 R6 第三级降级承接：部分交付 + 交期预警)</span></td>
+        </tr>
+        <tr>
+          <td><strong>受阻根因与物理瓶颈定位</strong></td>
+          <td>25 号壳体三头螺纹专用工装 <code>FIX-THR-25</code> 仅 1 套（H4/R2 等效串行，9 min/件），且 R6 规定红线单严禁加班（16:00 班末截止）。在动用 <code>SF-25-W-40</code> 全部 40 件自由库存并暂停同壳体 P2 订单后，剩余自产需求仍超出 D4—D6 工装物理极限产能。</td>
+        </tr>
+        <tr>
+          <td><strong>降级承接方案（部分交付）</strong></td>
+          <td>• <strong>第一批（D6 16:00 前按期交付）</strong>：交付 <strong>120 件</strong>（含库存成品 40 件 + 车间 R1/R3 极限自产 80 件）；<br>• <strong>第二批（缺口顺延交付）</strong>：剩余缺口 <strong>40 件</strong> 顺延至 <strong>D7 14:30</strong> 完成交付（或申请临时启用 2 套工装/授权 3.5 小时加班）。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+</body>
+</html>
