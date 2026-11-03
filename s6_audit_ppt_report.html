@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S6 甲方验收审计、汇报PPT核查与线上联调诊断报告</title>
+<style>
+  :root {
+    --bg: #F4F4F0;
+    --paper: #FFFFFF;
+    --ink: #111111;
+    --muted: #555550;
+    --line: #111111;
+    --red: #E60012;
+    --red-soft: #FDECEC;
+    --gray-soft: #EFEFEA;
+    --font-sans: "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-mono: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    padding: 26px 18px 56px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 2.5px solid var(--line);
+  }
+  .masthead {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    border-bottom: 3px solid var(--line);
+  }
+  .mh-left {
+    grid-column: span 8;
+    padding: 26px 30px;
+    border-right: 2px solid var(--line);
+  }
+  .mh-right {
+    grid-column: span 4;
+    background: var(--ink);
+    color: #FFFFFF;
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .eyebrow {
+    display: inline-block;
+    background: var(--red);
+    color: #FFFFFF;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    margin-bottom: 10px;
+  }
+  h1 { font-size: 25px; font-weight: 900; line-height: 1.25; margin-bottom: 10px; }
+  .lead { color: var(--muted); font-size: 14px; line-height: 1.65; }
+  .meta-foot { font-family: var(--font-mono); font-size: 12px; border-top: 1px solid #444; padding-top: 10px; color: #DFDFD8; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2.5px solid var(--line); }
+  .kpi-cell { padding: 18px 20px; border-right: 1.5px solid var(--line); }
+  .kpi-cell:last-child { border-right: none; }
+  .k-lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: var(--muted); }
+  .k-val { font-family: var(--font-mono); font-size: 27px; font-weight: 900; margin: 6px 0; }
+  .k-val.red { color: var(--red); }
+  .k-sub { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .sec { padding: 26px 30px; border-bottom: 2px solid var(--line); }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 18px; }
+  .sec-tag { font-family: var(--font-mono); font-size: 12px; font-weight: 900; background: var(--red); color: #FFFFFF; padding: 3px 9px; }
+  h2 { font-size: 19px; font-weight: 900; }
+  p { margin-bottom: 10px; }
+  .alert-box {
+    border: 2px solid var(--red);
+    background: var(--red-soft);
+    padding: 15px 18px;
+    margin: 12px 0 16px;
+  }
+  .formula {
+    border: 1.5px solid var(--line);
+    background: var(--gray-soft);
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-family: var(--font-mono);
+    font-size: 12.8px;
+  }
+  .calc-example {
+    border-left: 4px solid var(--red);
+    background: var(--red-soft);
+    padding: 11px 15px;
+    margin: 10px 0 14px;
+    font-size: 13.3px;
+  }
+  table.s-tbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.3px; }
+  table.s-tbl th, table.s-tbl td { border: 1.5px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+  table.s-tbl th { background: var(--ink); color: #FFFFFF; font-family: var(--font-mono); font-size: 11.8px; }
+  table.s-tbl tr:nth-child(even) td { background: #F9F9F6; }
+  table.s-tbl tr.hi-row td { background: var(--red-soft); font-weight: 700; }
+  .pill { font-family: var(--font-mono); font-size: 11px; font-weight: 800; padding: 2px 7px; border: 1px solid var(--line); background: #FFFFFF; }
+  .pill.red { background: var(--red); color: #FFFFFF; border-color: var(--red); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div class="mh-left">
+      <div class="eyebrow">COVERAGE AUDIT · PPT REVIEW · LIVE ENDPOINT PROBE (2026-11-03)</div>
+      <h1>S6 甲方验收覆盖度审计、汇报PPT核查与线上双站联调全量诊断报告</h1>
+      <p class="lead">
+        基于志君最新发来的《COVERAGE_AUDIT_20261103.md》《有限产能排产项目汇报材料(2).pptx》、远端仓库 <code>cruise991/bonc-agent (b2cbc5a)</code> 以及恢复上线的双站点（<code>sws.cruise992.dpdns.org</code> 与 <code>aps.cruise992.dpdns.org</code>），我们完成了代码级与接口级交叉核验，提炼出<strong>你现在最该帮志君补上的 3 块关键拼图与 1 个 PPT 致命占位符隐患</strong>。
+      </p>
+    </div>
+    <div class="mh-right">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:#E60012;font-weight:800;">CRITICAL FINDINGS</div>
+        <div style="font-size:19px;font-weight:900;margin-top:6px;">PPT 第 19~20 页存在模板废话残留！</div>
+        <div style="font-size:13px;color:#CFCFC8;margin-top:4px;">且志君正在突击的 G1/G6/G9 缺口，可直接用你已写好的 96.7% 专机算法一键解决</div>
+      </div>
+      <div class="meta-foot">
+        审计文档：COVERAGE_AUDIT_20261103.md<br>
+        线上测试：sws &amp; aps 双站 HTTP 200<br>
+        诊断日期：2026-11-03
+      </div>
+    </div>
+  </header>
+
+  <section class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="k-lbl">01 / 甲方总分模型缺口 (G1)</div>
+      <div class="k-val red">[54, 94]</div>
+      <div class="k-sub">志君现行 T0 仅拿 24/30 分（换型283次劣化+E1新增6单延期），急需切换你的 96.7% 算法拉满总分</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">02 / 你的 T0+ 专机算法优势</div>
+      <div class="k-val">96.7%</div>
+      <div class="k-sub">准交 116/120 单、延期 <strong>137.3h (≤300h)</strong>、换型 <strong>187次 (&lt;B0 223次)</strong>，一举消灭 G6/G9</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">03 / 汇报 PPT 致命隐患</div>
+      <div class="k-val red">P19-P20</div>
+      <div class="k-sub">第 19、20 页《实测效果与验证》仍是<strong>“物流企业/电子商务”模板废话</strong>，第 26 页空白</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">04 / 线上双站连通性实测</div>
+      <div class="k-val">200 OK</div>
+      <div class="k-sub"><code>sws</code>(瑞士风+三级沙箱) 与 <code>aps</code>(深色版J599Z) 均已恢复在线</div>
+    </div>
+  </section>
+
+  <!-- PART 01：《COVERAGE_AUDIT_20261103.md》核心解读：志君正在突击什么？你手里有什么现成武器？ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-tag">PART 01</span>
+      <h2>深度拆解《COVERAGE_AUDIT_20261103.md》：志君正在突击的 4 大痛点，有 3 个你手里已经有现成解！</h2>
+    </div>
+    <p>
+      志君发给你的这份 <code>COVERAGE_AUDIT_20261103.md</code> 是他对照甲方《场景需求20261030.pdf》第六节“验收基线与考核标准”做的内部自查差距表（他特意加了 <code>.gitignore</code> 防止推上 GitHub）。
+    </p>
+    <p>
+      甲方最终通过的硬条件是<strong>五维加权总分 ≥ 80 分 + 三条一票否决全过</strong>。五维总分的计算公式如下。
+    </p>
+    <div class="formula">
+      Score_Total = S_约束(20分) + S_优化(30分) + S_重排(25分) + S_效率(10分) + S_解释(15分) ≥ 80 分
+    </div>
+    <div class="calc-example">
+      <strong>接地气代入算例（为什么志君在文档里急得写下“总分区间 [54, 94]，目前无法自证 ≥80 通过线”？）</strong><br>
+      • <strong>志君现行 <code>scences_scheduler.py</code> 的困境</strong>：我们刚查了 GitHub <code>b2cbc5a</code> 里的 <code>solve_t0()</code>，它用的是“跨壳体轮询（Round-Robin）”，也就是故意把 09➔11➔13➔17➔21➔25 壳体挨个换着排。结果导致：<strong>① T0 换型次数飙到 283 次（比 B0 基线 223 次还多换了 60 次，触发缺口 G6 扣分风险）；② T0 仍有 17 笔延期单（约 590h 延期），30 分优化维度只拿到“良好档 24 分”；③ E1 重排时新增了 6 张延期单（甲方要求每事件新增延期 ≤ 1 单），导致 25 分重排维度面临大幅扣分</strong>。一旦重排(25分)和解释(15分)被严判，就只剩 <code>20(约束) + 24(优化) + 0(重排) + 10(效率) + 0(解释) = 54 分 &lt; 80 分</code>！<br>
+      • <strong>换成你写的 <code>scripts/t0_advanced_optimizer.py</code> 后的得分跃升</strong>：你的算法已经在仓库 <code>scripts/t0_advanced_optimizer.py</code> 里了！它采用<strong>专机单元化 + 电镀解耦同族连镀</strong>，实测准交率 <strong>96.7%（116/120，仅 4 单延期）</strong>，总延期 <strong>137.3h（直接达标 G9 的 ≤300h 目标）</strong>，总换型降至 <strong>187 次（比 B0 223 次少 36 次，彻底消灭 G6 换型劣化）</strong>！光这一项就能把 30 分优化维度从 24 分直接拉到 <strong>28~30 分</strong>，稳稳托住 ≥80 分大关！
+    </div>
+
+    <table class="s-tbl">
+      <thead>
+        <tr>
+          <th style="width:14%;">审计缺口编号</th>
+          <th style="width:34%;">志君《COVERAGE_AUDIT》指出的当前缺失问题</th>
+          <th style="width:36%;">我们在 GitHub <code>b2cbc5a</code> 查到的代码真因</th>
+          <th style="width:16%;">你能直接帮他解决的方案</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hi-row">
+          <td><strong>G1 / G6 / G9<br>（P0 最高优）</strong><br>T0 优化档位仅 24/30 且换型劣化</td>
+          <td>现行 T0 仅拿“良好 24/30”，且 <strong>T0 换型 283 次 vs B0 223 次（多换 60 次，方向劣化）</strong>，总延期未达 ≤300h 目标，且有 17 笔延期单需输出不可达预警（G7）。</td>
+          <td><code>backend/solver/scences_scheduler.py</code> 第 246 行的 <code>solve_t0()</code> 仍在用旧的“跨壳体轮询”，没有调用已经合并进 <code>scripts/t0_advanced_optimizer.py</code> 的专机+电镀解耦引擎。</td>
+          <td><span class="pill red">现成代码可替换</span><br>把 <code>t0_advanced_optimizer.py</code> 接入 <code>solve_t0()</code>，立刻升至 <strong>96.7% OTD / 137.3h / 187次换型（仅4单延期）</strong></td>
+        </tr>
+        <tr class="hi-row">
+          <td><strong>G2<br>（P0 最高优）</strong><br>E1 新增延期 6 单 &amp; <code>change_rate()</code> 判据失严</td>
+          <td>① 甲方要求每次重排<strong>新增延期订单 ≤ 1 个</strong>，现行 E1 新增了 6 单延期；<br>② <code>change_rate()</code> 分母误用了全量 862 道工序（应为触发时刻未开工工序数），且漏查了完工时间偏移 <code>end</code> 和工装/挂具变化，还加了 ±5min 容差。</td>
+          <td>在 <code>scences_scheduler.py</code> 的 <code>reschedule_e1()</code> 中，若重跑全厂未开工序列会引起跨壳体连锁推挤导致 6 单新延期；而若采用<strong>按设备/工装局部右移修复（冻结非 25 号壳体）</strong>，仅推迟 <code>ORD-009</code> 一张单。</td>
+          <td><span class="pill red">局部右移锁死≤1单</span><br>冻结非 25 壳体机台，仅右移 <code>FIX-THR-25</code> 冲突工序，新增延期严格 = <strong>0~1 单</strong>，严苛变更率仅 <strong>2.6% (≤20%)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>G3<br>（P1 高优）</strong><br>H6 漏写 ORD-121 的 16:00~18:00 豁免</td>
+          <td>甲方 §7.4 R6 允许 E1 插单 <code>ORD-121</code> 在 D6 16:00—18:00 之间做 ≤2h 加班检验收尾且不计违规，但现行 H6 判据写死了 16:00 下班，会把 16:00—18:00 误报为违规。</td>
+          <td><code>backend/validator/scences_auditor.py</code> 中对 <code>ORD-121</code> 尚未加入 D6 16:00~18:00 收尾豁免分支。</td>
+          <td><span class="pill">3行代码即修好</span><br>在 H6 校验中对 <code>oid == "ORD-121" and day == 6</code> 放宽至 18:00</td>
+        </tr>
+        <tr>
+          <td><strong>G4 / G5<br>（P1 高优）</strong><br>双 Agent 240s SLA 与三视图差异高亮取证</td>
+          <td>① 缺少异常分析 ≤120s、排产优化 ≤240s 的端到端契约断言；<br>② 缺少甘特图/负荷图/<strong>被变更工序差异高亮视图</strong>的自动化截图与 DOM 取证。</td>
+          <td>我们上一轮刚帮他修好了 <code>decision_agent.py</code> 的 E1 分支与 <code>reschedule/route.ts</code> 的 <code>contentMarkdown</code> 字段。</td>
+          <td><span class="pill red">提醒他合并 77663a0</span><br>他当前 <code>main(b2cbc5a)</code> 还没合入我们刚推在 <code>feat/s6-swiss-v1.1(77663a0)</code> 的双 Agent 稳定性修复</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PART 02：《有限产能排产项目汇报材料(2).pptx》32 页逐页体检（抓出严重模板占位符隐患！） -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-tag">PART 02</span>
+      <h2>汇报 PPT《有限产能排产项目汇报材料(2).pptx》逐页体检：第 19、20、26 页必须马上改！</h2>
+    </div>
+    <div class="alert-box">
+      <strong>【一级预警】PPT 第 19 页、第 20 页（第五章：05 实测效果与验证）目前全是 PPT 模板自带的“物流企业/电子商务”假文字！</strong><br>
+      这版 32 页的 PPT 前面第 1~17 页（需求理解、六层架构、五大创新点、三智能体班组设计）写得非常扎实，第 24 页团队介绍也已经把你的背景（<strong>算法负责人：秦祉霈，莱顿大学计算机科学、曼彻斯特大学统计学双硕士</strong>）写进去了。但是最核心的<strong>第五章「05 实测效果与验证（第 18~20 页）」还没填真实数据，保留着模板里关于“物流企业/电子商务”的凑数文字</strong>，一旦直接发给甲方或上会演示会非常尴尬！
+    </div>
+
+    <table class="s-tbl">
+      <thead>
+        <tr>
+          <th style="width:14%;">PPT 页码与章节</th>
+          <th style="width:38%;">当前 PPT 里的实际文字内容（原样提取）</th>
+          <th style="width:48%;">问题诊断与立即可替换的真实文案建议</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hi-row">
+          <td><strong>第 19 页<br>（05 实测效果与验证）</strong></td>
+          <td>标题：<code>做的好的地方 / 需要继续提升的地方</code><br>正文重复了 6 遍模板假话：<br><code>“物流企业应提前进行物流需求量的预估，加大技术和设备的投入，借助人工智能技术的支持”</code></td>
+          <td><strong>【严重模板残留，必须替换！】</strong>建议直接替换为<strong>《B0 基线 vs T0 优化排产核心指标实测对比表》</strong>：<br>
+          • <strong>准时交付率 (OTD)</strong>：从 B0 基线 <code>60.8% (73/120)</code> 提升至 <code>85.8% ~ 96.7% (116/120)</code>；<br>
+          • <strong>订单总延期工时</strong>：从 B0 基线 <code>1192.4h</code> 压降至 <code>137.3h</code>（降幅达 <strong>-88.5%</strong>，远优于 ≤300h 目标）；<br>
+          • <strong>全厂换型次数与红线保障</strong>：换型从 <code>223 次</code> 降至 <code>187 次</code>，4 张 P0 军工红线单 <strong>100% 零延期</strong>，H1~H9 硬约束 <strong>0 违规</strong>。</td>
+        </tr>
+        <tr class="hi-row">
+          <td><strong>第 20 页<br>（05 实测效果与验证）</strong></td>
+          <td>正文重复了 4 遍模板假话：<br><code>“电子商务的蓬勃发展，对物流企业提出了更高的要求。提高物流活动中关键环节的运行效率与质量”</code></td>
+          <td><strong>【严重模板残留，必须替换！】</strong>建议直接替换为<strong>《E1 紧急插单与 E2 设备故障动态重排实测成效》</strong>：<br>
+          • <strong>E1 紧急插单 (ORD-121, 80件)</strong>：启用 R5 借用 40 件库存 + 自产 40 件，于 <strong>D6 11:50 按期完工（零加班）</strong>，工序变更率仅 <strong>1.2%~2.6%（远优于 ≤20% 门限）</strong>；<br>
+          • <strong>E2 设备故障 (TX-02 停机 8h)</strong>：班内重叠 120min 自动分流至 TX-01/03/04，变更率仅 <strong>0.2%~0.8%</strong>，单次重排耗时 <strong>&lt; 3 秒（远优于 ≤120s 门限）</strong>。</td>
+        </tr>
+        <tr>
+          <td><strong>第 10~11 页<br>（03 关键技术路线）</strong></td>
+          <td>第 10 页写“实测将延期改善率推高至 21.4%”；<br>第 11 页写“将任务变更率锁死在 ≤30% 以内”。</td>
+          <td><strong>【口径建议对齐最新 PDF】</strong>最新《场景需求20261030.pdf》要求被变更工序占比 <strong>≤ 20%</strong>（不再是旧版的 ≤30%），且 T0 延期压降幅度已经达到 <strong>-50% ~ -88.5%</strong>，建议把第 11 页的“≤30%”改为“<strong>≤20%（实测 1.2%）</strong>”。</td>
+        </tr>
+        <tr>
+          <td><strong>第 26 页 &amp; 第 28~32 页</strong></td>
+          <td>第 26 页仅有标题《案例项目介绍》全页空白；<br>第 28~32 页为 PPT 模板自带的《操作教程-颜色规范/字体规范/素材分享/备用图标》。</td>
+          <td><strong>【PPT 尾部模板未删！】</strong>第 26 页空白页和第 28~32 页（位于第 27 页“汇报结束 感谢指导”之后的设计规范模板页）在正式导出交付前必须删掉。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PART 03：线上双站点（sws vs aps）实时测试体检表 -->
+  <section class="sec" style="border-bottom:none;">
+    <div class="sec-head">
+      <span class="sec-tag">PART 03</span>
+      <h2>线上双站点（<code>sws.cruise992.dpdns.org</code> 与 <code>aps.cruise992.dpdns.org</code>）实时接口压测报告</h2>
+    </div>
+    <p>
+      我们对志君恢复的两个线上域名进行了实时 HTTP 探针测试，两个站点均已通过 Cloudflare 正常对外提供服务（HTTP 200），具体版本与接口状态差异如下。
+    </p>
+    <table class="s-tbl">
+      <thead>
+        <tr>
+          <th>测试项 / 接口路由</th>
+          <th><code>https://sws.cruise992.dpdns.org/</code><br>（瑞士国际主义浅色版 <code>class="light swiss-intl"</code>）</th>
+          <th><code>https://aps.cruise992.dpdns.org/</code><br>（J599Z 深色版 <code>class="dark"</code>，志君正在本地修订中）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>首页渲染与视觉风格</strong></td>
+          <td><span class="pill red">200 OK</span> 瑞士国际主义风格工作台，响应极快</td>
+          <td><span class="pill red">200 OK</span> 深色工业风工作台，已挂载 J599Z 场景</td>
+        </tr>
+        <tr>
+          <td><strong>主数据防呆预检<br><code>POST /api/v1/schedule/sanity-check</code></strong></td>
+          <td><span class="pill red">200 OK</span> <code>isHealthy: true, totalErrors: 0</code></td>
+          <td><span class="pill red">200 OK</span> <code>isHealthy: true, totalErrors: 0</code></td>
+        </tr>
+        <tr>
+          <td><strong>三级无解沙箱推演接口<br><code>POST /api/v1/schedule/whatif-sandbox</code></strong></td>
+          <td><span class="pill red">200 OK</span> 完整返回 <code>OPT_A / OPT_B / OPT_C</code> 三套方案并推荐 <code>OPT_B</code></td>
+          <td><span class="pill">404 未同步</span> 线上旧镜像尚未合入 <code>whatif-sandbox</code> 路由</td>
+        </tr>
+        <tr>
+          <td><strong>E1 动态插单重排接口<br><code>POST /api/v1/schedule/reschedule</code></strong></td>
+          <td><span class="pill">200 OK (需传 currentTasks)</span> 不传任务列表时默认返回空数组，前端页面内点击正常</td>
+          <td><span class="pill red">200 OK</span> 直接返回 862 道 J599Z 排产工序（耗时 2.92s，变更率 1.2%）</td>
+        </tr>
+        <tr>
+          <td><strong>Copilot 智能体对话接口<br><code>POST /api/gemini/copilot</code></strong></td>
+          <td><span class="pill red">200 OK</span> 正常返回诊断，但需合入我们刚推在 <code>feat/s6-swiss-v1.1(77663a0)</code> 的防截胡补丁</td>
+          <td><span class="pill red">200 OK</span> 识别 E1 插单并返回 <code>ORD-121</code> 重排摘要</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+</body>
+</html>
