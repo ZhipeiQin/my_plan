@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S6 main分支假数据与测试数据深度排查及Codex交接报告</title>
+<style>
+  :root {
+    --bg: #F4F4F0;
+    --paper: #FFFFFF;
+    --ink: #111111;
+    --muted: #555550;
+    --line: #111111;
+    --red: #E60012;
+    --red-soft: #FDECEC;
+    --gray-soft: #EFEFEA;
+    --font-sans: "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-mono: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    padding: 26px 18px 56px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 1220px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 2.5px solid var(--line);
+  }
+  .masthead {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    border-bottom: 3px solid var(--line);
+  }
+  .mh-left {
+    grid-column: span 8;
+    padding: 26px 30px;
+    border-right: 2px solid var(--line);
+  }
+  .mh-right {
+    grid-column: span 4;
+    background: var(--ink);
+    color: #FFFFFF;
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .eyebrow {
+    display: inline-block;
+    background: var(--red);
+    color: #FFFFFF;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    margin-bottom: 10px;
+  }
+  h1 { font-size: 25px; font-weight: 900; line-height: 1.26; margin-bottom: 10px; }
+  .lead { color: var(--muted); font-size: 14px; line-height: 1.68; }
+  .meta-foot { font-family: var(--font-mono); font-size: 12px; border-top: 1px solid #444; padding-top: 10px; color: #DFDFD8; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2.5px solid var(--line); }
+  .kpi-cell { padding: 18px 20px; border-right: 1.5px solid var(--line); }
+  .kpi-cell:last-child { border-right: none; }
+  .k-lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: var(--muted); }
+  .k-val { font-family: var(--font-mono); font-size: 26px; font-weight: 900; margin: 6px 0; }
+  .k-val.red { color: var(--red); }
+  .k-sub { font-size: 12.5px; color: var(--muted); line-height: 1.48; }
+  .sec { padding: 26px 30px; border-bottom: 2px solid var(--line); }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 18px; }
+  .sec-tag { font-family: var(--font-mono); font-size: 12px; font-weight: 900; background: var(--red); color: #FFFFFF; padding: 3px 9px; }
+  h2 { font-size: 19px; font-weight: 900; }
+  p { margin-bottom: 11px; }
+  .formula {
+    border: 1.5px solid var(--line);
+    background: var(--gray-soft);
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-family: var(--font-mono);
+    font-size: 12.8px;
+  }
+  .calc-example {
+    border-left: 4px solid var(--red);
+    background: var(--red-soft);
+    padding: 11px 15px;
+    margin: 10px 0 14px;
+    font-size: 13.3px;
+  }
+  table.s-tbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.2px; }
+  table.s-tbl th, table.s-tbl td { border: 1.5px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+  table.s-tbl th { background: var(--ink); color: #FFFFFF; font-family: var(--font-mono); font-size: 11.8px; }
+  table.s-tbl tr:nth-child(even) td { background: #F9F9F6; }
+  table.s-tbl tr.hi-row td { background: var(--red-soft); font-weight: 700; }
+  .pill { font-family: var(--font-mono); font-size: 11px; font-weight: 800; padding: 2px 8px; border: 1px solid var(--line); background: #FFFFFF; }
+  .pill.red { background: var(--red); color: #FFFFFF; border-color: var(--red); }
+  .action-card { border: 2px solid var(--line); background: #FFFFFF; margin-bottom: 14px; }
+  .action-head { background: var(--gray-soft); border-bottom: 1.5px solid var(--line); padding: 10px 15px; font-weight: 900; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .action-head.p0 { background: var(--red-soft); border-left: 6px solid var(--red); }
+  .action-body { padding: 14px 16px; font-size: 13.8px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div class="mh-left">
+      <div class="eyebrow">MAIN BRANCH (a3f289a) DEEP DATA AUDIT &amp; CODEX HANDOVER · 2026-11-05</div>
+      <h1>S6 main分支假数据与测试数据问题深度排查及Codex交接报告</h1>
+      <p class="lead">
+        跟进 <code>cruise991/bonc-agent</code> 最新 <code>main</code> 分支（Commit <code>a3f289a</code>：<code>feat(audit): 彻底消除写死假数据...</code>），针对志君反映的“<strong>测试数据还是感觉有问题、可能还有假数据</strong>”进行全仓实跑穿透式排查。我们定位出 <strong>8 处藏在甘特图 Diff 转换层、前端静态种子、时间轴换算、E2 停机窗口和双 Agent 文本里的真假数据打架病灶</strong>，并已生成可直接交接给 Codex 执行的完整指令文档。
+      </p>
+    </div>
+    <div class="mh-right">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:#E60012;font-weight:800;">AUDIT VERDICT ON MAIN@a3f289a</div>
+        <div style="font-size:19px;font-weight:900;margin-top:6px;">抓出 8 处隐蔽假数据与口径错位！</div>
+        <div style="font-size:13px;color:#CFCFC8;margin-top:4px;">志君的直觉非常准：内核虽然改了真求解，但转前端 Diff、静态种子和 Agent 报告仍留着旧假数据</div>
+      </div>
+      <div class="meta-foot">
+        审计提交：main @ a3f289a (477 files)<br>
+        Codex交接文档：CODEX_HANDOVER_S6_MAIN_AUDIT_AND_FIX_PLAN.md<br>
+        排查日期：2026-11-05
+      </div>
+    </div>
+  </header>
+
+  <section class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="k-lbl">01 / E1 甘特图假 Diff 错位</div>
+      <div class="k-val red">57道 ➔ 假标0道</div>
+      <div class="k-sub">内核真实变动了 11 单 57 道工序（<code>ORD-009</code> 根本没动），转前端时却把 57 道全标 <code>FROZEN</code>，只给 <code>ORD-009</code> 伪造了 <code>380m</code> 位移</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">02 / E2 停机轴多扣白天产能</div>
+      <div class="k-val">120m ➔ 480m</div>
+      <div class="k-sub">把班外 16:00~22:00 停机扣到了 D9 白天（<code>3720~4200</code>），导致 D9 才开工的 <code>ORD-008</code> 被误挤到 D27（延期10天）</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">03 / 前端静态种子脏数据掩盖</div>
+      <div class="k-val red">102单超期</div>
+      <div class="k-sub"><code>j599zScenarioData.ts</code> 仍是 20 天旧数据（15% 准交），靠 <code>slice(0, 14)</code> 强行把 88 张超期单改成 <code>isTardy=false</code></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="k-lbl">04 / 名义轴(8h) vs 有效轴(7.5h)</div>
+      <div class="k-val">85.8% ➔ 71.7%</div>
+      <div class="k-sub"><code>end_hour</code> 按 8h/天算，<code>due_date_hour</code> 按 7.5h/天算，导致 17 张按时单在前端比大小时变延期</div>
+    </div>
+  </section>
+
+  <!-- PART 01：为什么志君觉得“测试数据还有问题、还有假数据”？（8大病灶全景表） -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-tag">PART 01</span>
+      <h2>重点排查结论：为什么志君总觉得测试数据不对劲？（8 处实锤假数据与错位清单）</h2>
+    </div>
+    <p>
+      在最新提交 <code>a3f289a</code> 中，志君已经花大力气把 <code>evaluate_client_acceptance.py</code> 和内核 <code>solve_t0 / reschedule_e1 / reschedule_e2</code> 改成了真实物理探测求解。但为什么他自己看网页跑测试时，还是觉得数据不对劲、像有假数据？因为<strong>“内核算出来的是真数据，但在转成前端甘特图、前端初始种子、以及双 Agent 文字报告的半路上，被还没删干净的旧版硬编码代码给篡改或截胡了”</strong>！
+    </p>
+
+    <table class="s-tbl">
+      <thead>
+        <tr>
+          <th style="width:16%;">病灶编号与严重度</th>
+          <th style="width:24%;">精确文件与行号位置</th>
+          <th style="width:36%;">实测抓出的“假数据 / 数据打架”现象（大白话解释）</th>
+          <th style="width:24%;">导致的具体后果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hi-row">
+          <td><strong>病灶 1 · P0</strong><br>E1 甘特图假 Diff<br>（张冠李戴）</td>
+          <td><code>scences_scheduler.py</code><br>第 818 行 vs 第 1490–1512 行<br><code>schedule_router.py</code><br>第 486–515 行</td>
+          <td>在 <code>_solve_e1_champion()</code> 第 818 行里，<code>ORD-009</code> 被放进了 <code>protected_oids</code> 保护名单，<strong>连 1 分钟都没动过</strong>；真正被挤动的是另外 <strong>11 张单的 57 道工序</strong>（<code>ORD-001/002/005/070/073/100/105/108/111/116/117</code>）。<br>但第 1499 行转前端甘特图时，还留着旧的写死代码：<code>elif r["oid"] == "ORD-009": diff_status = "SHIFTED"; shift_min = 380.0; else: diff_status = "FROZEN"</code>！</td>
+          <td>顶部 KPI 写着“变更 57 道工序”，结果点开甘特图重排对比，那 57 道真变动的工序全显示“未变动”，反而给没动的 <code>ORD-009</code> 画了个假的 <code>-380min</code> 幽灵框！</td>
+        </tr>
+        <tr class="hi-row">
+          <td><strong>病灶 2 · P0</strong><br>E2 停机窗口算错<br>&amp; 假 +30m 位移</td>
+          <td><code>scences_scheduler.py</code><br>第 1078–1083 行、第 1513–1530 行<br><code>schedule_router.py</code><br>第 569–585 行</td>
+          <td>1. 甲方规定 D8 14:00~22:00 停机 8h 只扣 D8 班内重叠的 <strong>120 分钟（14:00~16:00，名义轴 <code>3720~3840</code>）</strong>，16:00~22:00 是下班时间不扣次日产能。但第 1079 行写了 <code>down_e = t_trig + 480 = 4200</code>，把 <strong>D9 白天 08:30~14:00</strong> 也当成停机，把 D9 11:42 才上机的 <code>ORD-008</code> 误抓去重排，一路挤到 D27 完工（延期 10 天）！<br>2. 第 1521 行转前端时又写死 <code>shift_min = 30.0</code>、<code>new_machine_id = "TX-03"</code>。</td>
+          <td>直接导致官方验收脚本报红灯 <code>FAIL: E2 受影响订单单笔最大顺延 10 &gt; 1</code>，且前端 E2 差异图显示的位移时间（30分钟）与实际完全不符。</td>
+        </tr>
+        <tr class="hi-row">
+          <td><strong>病灶 3 · P0</strong><br>E1 重排先锁远期单<br>导致新增 4 单延期</td>
+          <td><code>scences_scheduler.py</code><br>第 928–1002 行<br>(<code>_solve_e1_champion</code>)</td>
+          <td>E1 插入 <code>ORD-121</code> 时，先把全厂所有没直接相撞的远期订单（交期在 D15~D31）在 D5~D18 的机台和工装槽位全部锁死（<code>unaffected_ops</code>），最后才去排被撞开的 11 张单。结果交期在 D6~D9 的 <code>ORD-073、ORD-100、ORD-111、ORD-117</code> 找不到前排空位，被直接踢到了 <strong>D23~D24</strong>！</td>
+          <td>直接导致官方验收脚本报红灯 <code>FAIL: E1 新增延期订单数 实测 4 &gt; 1</code>（<code>tests/test_acceptance_coverage_gaps.py</code> 被迫标为 <code>xfail</code>）。</td>
+        </tr>
+        <tr class="hi-row">
+          <td><strong>病灶 4 · P0</strong><br>前端静态种子仍是<br>旧20天脏数据+强行掩盖</td>
+          <td><code>lib/j599zScenarioData.ts</code><br><code>lib/mockData.ts</code><br>第 546–775 行、第 1079–1101 行</td>
+          <td>1. <code>J599Z_TASKS</code> 还是旧版 20 天数据（交期 D5~D20 15:30），实算有 <strong>102 张单超期（准交率仅 15.0%、延期 18,043.4h、59 处重叠）</strong>。<br>2. <code>mockData.ts</code> 第 571 行用 <code>slice(0, 14)</code> 强行把 88 张超期单改成 <code>isTardy = false</code>；第 597 行 <code>ds_j599z_rush</code> 里的 <code>ORD-121</code> 还是编造的 <strong>30件 09A 壳体、OP15/OP30/OP45 假工序号、PL-01 假机器名</strong>！</td>
+          <td>在前端看订单明细时，明明某张单 D22 才做完、交期是 D12（晚了10天），却标着“按时交付（绿色）”；一旦触发本地重算就露馅。</td>
+        </tr>
+        <tr>
+          <td><strong>病灶 5 · P1</strong><br>8.0h 名义轴与<br>7.5h 有效轴混用</td>
+          <td><code>scences_scheduler.py</code><br>第 1452–1463 行、第 1656 行</td>
+          <td>把工序完工时间 <code>e_h = r["e"] / 60.0</code> 按每天 <strong>8.0 小时名义轴</strong>算（D30 结束是 <code>240.0h</code>），却把交期 <code>due_h = due_d_num * 7.5</code> 按每天 <strong>7.5 小时有效轴</strong>算（D30 交期是 <code>225.0h</code>），计划期上限也写成了 <code>232.5h</code>。</td>
+          <td>17 张在交期当天按时做完的订单，因为 <code>end_hour (8.0d) &gt; due_date_hour (7.5d)</code>，在前端重算时全部被误判为延期，准交率从 85.8% 掉到 71.7%。</td>
+        </tr>
+        <tr>
+          <td><strong>病灶 6 · P1</strong><br>双 Agent 报告与<br>内核数字自相矛盾</td>
+          <td><code>analyst_agent.py</code> L172–236<br><code>decision_agent.py</code> L103–201<br><code>copilot/route.ts</code> L486</td>
+          <td><code>decision_agent.py</code> 同一个返回字典里，上面 <code>actions</code> 写着“仅顺延 ORD-009 380min，其余 119 单冻结”，下面 <code>projectedGains</code> 却写着 <code>changedOpCount: 57, newDelayedOrders: 4</code>；E2 受影响订单在内核（2单）、Agent（抄 B0 的 5 单）、Copilot（抄旧数据的 5 单）三个地方有三套完全不同的名单。</td>
+          <td>评委或志君点开智能体抽屉一看，文字写的受影响订单和甘特图上动的订单完全对不上。</td>
+        </tr>
+        <tr>
+          <td><strong>病灶 7 · P1</strong><br>E1 换型次数写死<br>魔法常数 <code>- 18</code></td>
+          <td><code>scences_scheduler.py</code><br>第 777、822、934、1015–1019 行</td>
+          <td><code>_solve_e1_champion</code> 提交未变动工序时传了 <code>need=0.0</code>，导致 <code>R[rid].setups</code> 只算了局部的 22 次换型，然后在第 1017 行写死凑数公式 <code>base_changeovers + max(0, e1_local_setups - 18)</code>，且没调 <code>_recalc_group_utilization</code>。</td>
+          <td>被官方验收脚本第四节当场抓出：<code>E1 TX 利用率内核 58.4 vs 甲方 56.5 (Δ -1.9)</code>、<code>换型内核 289 vs 甲方 279 (Δ -10.0)</code>。</td>
+        </tr>
+        <tr>
+          <td><strong>病灶 8 · P2</strong><br>旧数据路径残留与<br>52个调试脚本误提交</td>
+          <td><code>data_loader.py</code> L221<br><code>verify_ui_real_data_closure.py</code> L9<br><code>scripts/test_*.py</code></td>
+          <td>1. <code>data_loader.py</code> 的 <code>load_j599z_scenario_data</code> 仍在读 <code>data/scenarios/j599z_scen_2026b</code>（20天旧数据）；<br>2. <code>verify_ui_real_data_closure.py</code> 第 9 行写死了 <code>/Users/jackiecruise/...</code> 个人电脑路径；<br>3. <code>scripts/</code> 下误提交了 52 个临时调试脚本（如 <code>test_magic_tx01.py</code> 等）。</td>
+          <td>换台机器跑 UI 闭环测试会因路径或端口报错，且 52 个临时脚本容易被甲方审查源码时质疑。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PART 02：算术与坐标轴错位直观算例（讲透病灶 2 与病灶 5） -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-tag">PART 02</span>
+      <h2>核心算术复盘：为什么坐标轴混用和停机窗口写错会制造“假延期”？</h2>
+    </div>
+    <p>
+      为了让你和志君一眼看懂病灶 2（E2 停机窗口）和病灶 5（8.0h vs 7.5h 坐标轴混用）是怎么把好端端的订单算成延期的，下面列出两个公式的代入算例。
+    </p>
+    <div class="formula">
+      【病灶 5 坐标轴错位公式】<br>
+      后端赋给任务的完工小时：end_hour = ((d - 1) × 480 + m_clock) ÷ 60 ≈ 8.0 × d<br>
+      后端赋给任务的交期小时：due_date_hour = 7.5 × d_due<br>
+      当天按时完工时的虚假差值：Δ_false = end_hour - due_date_hour = 0.5 × d &gt; 0 （当 d ≥ 2 时恒被前端误判为超期！）
+    </div>
+    <div class="calc-example">
+      <strong>接地气代入算例（以第 20 天交期、第 20 天 15:00 按时完工的订单为例）</strong><br>
+      • 这张单子在 D20 下午 15:00（距 16:00 下班还有 1 小时）按时做完了。<br>
+      • 后端算它的 <code>end_hour</code>：<code>((20 - 1) × 480 + 420) ÷ 60 = 9540 ÷ 60 = 159.0 小时</code>。<br>
+      • 后端算它的 <code>due_date_hour</code>：<code>20 × 7.5 = 150.0 小时</code>。<br>
+      • 当这批任务传给前端后，前端 <code>summarizeTaskSet()</code> 一比大小：发现 <code>159.0 小时 &gt; 150.0 小时</code>，当场把这张明明提前 1 小时完工的准时单判成了“<strong>延期 9.0 小时</strong>”！全厂 17 张在交期日附近按时完工的单子全这样冤死，准交率直接从 <strong>85.8% 掉到 71.7%</strong>。修复方法很简单：两边统一都用 <code>8.0 × d</code>（或都用有效工时轴 <code>7.5 × d</code>）即可。
+    </div>
+
+    <div class="formula">
+      【病灶 2 E2 停机窗口公式】<br>
+      正确班内停机终点（PDF §7.2）：down_e_correct = (8 - 1) × 480 + 480 = 3840 min (D8 16:00 下班点，仅扣班内 120 min)<br>
+      现行错误停机终点（L1079）：down_e_bug = 3720 + 480 = 4200 min (跨入 D9 白天 3870~4200，多扣了 D9 白天 330 min！)
+    </div>
+    <div class="calc-example">
+      <strong>接地气代入算例（为什么 <code>ORD-008</code> 在 E2 里会莫名其妙延期 10 天？）</strong><br>
+      • <code>TX-02</code> 是在 <strong>D8 下午 14:00 到晚上 22:00</strong> 坏了 8 个小时。因为车间 16:00 就下班了，晚上 16:00 到 22:00 根本没人干活，等到第二天（D9）早上 08:30 上班时，<code>TX-02</code> 早就修好了。<br>
+      • <code>ORD-008</code> 在原计划里是 <strong>D9 中午 11:42（名义轴 <code>4062.0 min</code>）</strong> 才去 <code>TX-02</code> 上机，本来一点都不受 D8 故障影响。<br>
+      • 结果代码里写了 <code>down_e = 3720 + 480 = 4200 min</code>，把 <code>4062.0 &lt; 4200.0</code> 的 <code>ORD-008</code> 当成故障受阻单拎出来重排；重排时又先把后面 D12~D25 的单子全锁死在工装上，导致 <code>ORD-008</code> 找不到 720 分钟的连续空当，一路被踢到 <strong>D18</strong> 才做螺纹、<strong>D27</strong> 才出厂（交期 D12，整整晚了 15 天 / 10 个工作日）！把 <code>down_e</code> 改回 <code>3840.0</code> 后，这个问题当场消失。
+    </div>
+  </section>
+
+  <!-- PART 03：接下来该做什么？（已生成的 Codex 交接文档 6 步行动计划） -->
+  <section class="sec" style="border-bottom:none;">
+    <div class="sec-head">
+      <span class="sec-tag">PART 03</span>
+      <h2>下面该做什么？交接给 Codex 的 6 步闭环修复清单</h2>
+    </div>
+    <p>
+      我已经把所有需要修改的文件路径、函数名、行号和验证命令写成了一份专门给 Codex 看的 Markdown 交接文档（存放在 <code>/Users/zhipeiqin/Documents/CODEX_HANDOVER_S6_MAIN_AUDIT_AND_FIX_PLAN.md</code>）。你或志君把这份文档直接丢给 Codex，它会按以下 6 步顺序一次性修完：
+    </p>
+
+    <div class="action-card">
+      <div class="action-head p0">
+        <span>Task 1 · 修复 scences_scheduler.py 的 E1/E2 重排缺陷、真实 Diff 映射与坐标轴统一</span>
+        <span class="pill red">消除 E1/E2 两个 FAIL 红灯</span>
+      </div>
+      <div class="action-body">
+        1) 将 <code>reschedule_e2()</code> 第 1079 行的 <code>down_e</code> 从 <code>t_trig + 480.0 (4200)</code> 修正为 <code>7 * DAY_MIN + WIN_B (3840.0，即 D8 16:00)</code>，不再误伤 D9 才开工的 <code>ORD-008</code>；<br>
+        2) 在 <code>_solve_e1_champion()</code> 中，对紧交期冲突单（<code>ORD-073/100/111/117</code>）优先排入 D5~D8 槽位，将有 ≥3 天余量的远期单微调顺延，使 <strong>E1 新增延期单数 ≤ 1 单（PASS）</strong>；<br>
+        3) 删掉 <code>scences_solution_to_schedule_solution()</code> 第 1490–1530 行写死的 <code>ORD-009 380min</code> 和 <code>E2 30min</code> 假 Diff，直接对比 <code>t0_sol.ops</code> 标注真实变动的每一道工序，并将 <code>end_hour</code> 与 <code>due_date_hour</code> 统一到同一小时坐标轴；<br>
+        4) 删掉 E1 第 1017 行的 <code>- 18</code> 魔法换型公式，统一调用 <code>_recalc_group_utilization(final_ops)</code>。
+      </div>
+    </div>
+
+    <div class="action-card">
+      <div class="action-head p0">
+        <span>Task 2 · 升级 solve_t0() 排产质量，保护 E2 静态受影响单并冲刺 30/30 满分档</span>
+        <span class="pill red">总分从 77 分拉升至 94+ 分</span>
+      </div>
+      <div class="action-body">
+        在 <code>solve_t0()</code> 中提高 E2 静态受影响单（特别是 <code>ORD-007</code>）的排序优先级并融合同壳体亲和度与电镀连镀策略，消除 <code>ORD-007</code> 在 T0 中的 10 天历史延期，使 <code>evaluate_client_acceptance.py</code> 的 <strong>T0 满分档（30/30）</strong> 与 <strong>E2 受影响单最大顺延（绝对口径 ≤1 天）</strong> 全部翻绿 PASS。
+      </div>
+    </div>
+
+    <div class="action-card">
+      <div class="action-head p0">
+        <span>Task 3 · 用 solve_t0() 的真实 31 天排程重新生成 lib/j599zScenarioData.ts 并清理 mockData.ts</span>
+        <span class="pill red">拔除前端 102 单超期脏数据</span>
+      </div>
+      <div class="action-body">
+        从后端真实 31 天（D1~D31）排程结果重新导出生成 <code>lib/j599zScenarioData.ts</code>；删掉 <code>lib/mockData.ts</code> 里用 <code>slice(0, 14)</code> 强行掩盖 88 张超期单的假代码，以及 <code>ds_j599z_rush</code> 里编造的 <code>30件 09A / OP15 / PL-01</code> 假插单数据。
+      </div>
+    </div>
+
+    <div class="action-card">
+      <div class="action-head">
+        <span>Task 4 ~ Task 6 · 动态化双 Agent 报告、清理 52 个临时调试脚本并跑通全套门禁</span>
+        <span class="pill">工程收口与防篡改留痕</span>
+      </div>
+      <div class="action-body">
+        1) 让 <code>analyst_agent.py</code>、<code>decision_agent.py</code> 和 <code>copilot/route.ts</code> 直接从 <code>e1_sol / e2_sol</code> 动态读取受影响订单与变更工序数，彻底删掉“仅顺延 ORD-009 380min”等写死文本；<br>
+        2) 将 <code>data_loader.py</code> 对齐至 <code>data/1130/</code>，修复 <code>verify_ui_real_data_closure.py</code> 的个人电脑绝对路径，清理 <code>scripts/</code> 下误提交的 52 个临时脚本；<br>
+        3) 依次执行 <code>generate_measured_benchmark_curves.py</code>、<code>evaluate_client_acceptance.py</code>、<code>probe_api_kpi_consistency.py</code> 与 <code>./scripts/run_tests.sh</code> 完成最终留痕。
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
